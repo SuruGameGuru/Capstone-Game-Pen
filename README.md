@@ -207,13 +207,8 @@ Created by Suru Afariogun
 
 ---
 
-Happy collaborating! 🎮🎨
-
 ```
 
----
-
-If you want, I can help you add detailed sample backend or frontend code snippets next!
 ```
 
 ```
