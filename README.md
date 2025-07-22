@@ -1,215 +1,269 @@
-# Capstone-Game-Pen
-
 ```markdown
+# Game-Pen Build Guide
 
+A step-by-step breakdown for building the entire **Game-Pen** capstone project. This guide starts with the **frontend** to help visualize core pages before wiring up data with the backend.
+
+---
+
+## 📁 Project Structure
 ```
 
-# Indie Collaboration Platform Capstone Project
+/game-pen
+/client ← React Frontend
+/server ← Node/Express Backend
 
-## Project Overview
-
-This project is a website designed to help **solo game developers and artists collaborate** without being overshadowed by larger studios or mainstream platforms. Unlike sites like ArtStation or DeviantArt, this platform focuses on **direct collaboration and genre-specific networking**.
-
-Users can upload their work and interact directly through **genre-dedicated channels**, which match developers with artists whose styles complement their game themes. The platform empowers indie creators to find and work with the right partners efficiently and authentically.
+````
 
 ---
 
-## Motivation
+# 🖥️ FRONTEND FIRST
 
-As an artist passionate about games, juggling all roles—art, design, development, audience management—was overwhelming. This platform is a response to the need for **a collaborative space** where solo creators can connect, share, and build without burnout or noise from bigger studios.
-
----
-
-## Tech Stack
-
-- **Frontend:** React, CSS
-- **Backend:** Node.js + Express (PERN stack)
-- **Database:** PostgreSQL
-- **Languages:** JavaScript (main), Python (select backend tools), C++ (minimal)
-- **Authentication:** JWT with role-based access (artist or developer)
-- **Image Upload & Real-time:** Cloudinary for images, Socket.IO for chat
-- **Deployment:** Render or Vercel, version control with GitHub
-
----
-
-## Getting Started: Step-by-Step Setup
-
-### 1. Clone the Repository
+## Step 1: Create React App
 
 ```bash
-git clone https://github.com/yourusername/indie-collab-platform.git
-cd indie-collab-platform
+npx create-react-app client
+cd client
+npm install react-router-dom axios jwt-decode
+````
+
+## Step 2: Create Folder Structure
+
+```
+/client/src
+  /pages
+    Signup.jsx
+    Login.jsx
+    Upload.jsx
+    Explore.jsx
+    Profile.jsx
+  /components
+    Navbar.jsx
+    UploadForm.jsx
+    Gallery.jsx
 ```
 
+## Step 3: Setup Routing (React Router)
+
+In `App.jsx`:
+
+```jsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Signup from './pages/Signup';
+import Login from './pages/Login';
+import Upload from './pages/Upload';
+import Explore from './pages/Explore';
+import Profile from './pages/Profile';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/upload" element={<Upload />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+```
+
+## Step 4: Build Basic Pages
+
+### Signup.jsx
+
+- Fields: name, email, password, creative_focus
+- Submit POST request to `/api/signup`
+
+### Login.jsx
+
+- Fields: email, password
+- Submit POST to `/api/login`
+- Save token in `localStorage`
+
+### Upload.jsx
+
+- Fields: image upload, title, genre
+- Submit image + metadata (use FormData)
+
+### Explore.jsx
+
+- Fetch from `/api/uploads`
+- Display images in grid
+- Add genre filter dropdown
+
+### Profile.jsx
+
+- Fetch uploads by current user
+- Display bio and uploaded images
+
 ---
 
-### 2. Backend Setup
+# 🛠️ BACKEND SECOND
 
-#### a. Install Dependencies
+## Step 1: Setup Express Project
 
 ```bash
+mkdir server
 cd server
-npm install express pg cors dotenv jsonwebtoken socket.io cloudinary bcrypt
+npm init -y
+npm install express cors pg dotenv bcrypt jsonwebtoken
 ```
 
-#### b. Setup PostgreSQL Database Using pgAdmin (No command line needed)
+Create `index.js`:
 
-1. Open **pgAdmin**.
-2. Create a new **Server** (right-click Servers > Create > Server):
+```js
+const express = require('express');
+const cors = require('cors');
+const app = express();
+require('dotenv').config();
 
-   - Name: `IndieCollabServer`
-   - Connection:
+app.use(cors());
+app.use(express.json());
 
-     - Host: `localhost`
-     - Port: `5432`
-     - Username: `postgres`
-     - Password: _your password_
+app.get('/', (req, res) => res.send('Game-Pen API running'));
 
-3. Inside the new server, create a new **Database**:
+app.listen(5000, () => console.log('Server on http://localhost:5000'));
+```
 
-   - Name: `indie_collab_db`
+## Step 2: Setup PostgreSQL via pgAdmin
 
-4. Open the **Query Tool** for this database and run:
+1. Open pgAdmin and create a server & database
+
+   - Server name: `GamePenServer`
+   - DB name: `game_pen_db`
+
+2. Create tables via query:
 
 ```sql
--- Users table with roles (artist or developer)
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  username VARCHAR(100) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role VARCHAR(20) NOT NULL -- 'artist' or 'developer'
+  name VARCHAR(100),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  bio TEXT,
+  creative_focus VARCHAR(50),
+  profile_image TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Projects or uploads (image URLs stored)
+CREATE TABLE genre_tags (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE
+);
+
 CREATE TABLE uploads (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id),
-  image_url TEXT NOT NULL,
-  genre VARCHAR(100),
-  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Chat messages for real-time genre channels
-CREATE TABLE messages (
-  id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id),
-  genre VARCHAR(100) NOT NULL,
-  message TEXT NOT NULL,
-  sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  title VARCHAR(150),
+  description TEXT,
+  genre_tag_id INT REFERENCES genre_tags(id),
+  file_path TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
----
+## Step 3: Add Auth Routes
 
-#### c. Configure Environment Variables
+Create `/routes/auth.js`
 
-Create a `.env` file in `/server`:
+- POST `/signup` → register user, hash password
+- POST `/login` → validate, issue JWT
 
-```env
-DB_USER=postgres
-DB_PASSWORD=yourpassword
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=indie_collab_db
+```js
+// Sample: POST /signup
+router.post('/signup', async (req, res) => {
+  const { name, email, password, creative_focus } = req.body;
+  const hashed = await bcrypt.hash(password, 10);
+  await db.query(
+    'INSERT INTO users (name, email, password_hash, creative_focus) VALUES ($1, $2, $3, $4)',
+    [name, email, hashed, creative_focus]
+  );
+  res.sendStatus(201);
+});
+```
 
-JWT_SECRET=your_jwt_secret_key
+## Step 4: Add Upload + Explore Routes
 
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+- POST `/uploads` → save metadata
+- GET `/uploads` → return all uploads
+- GET `/uploads?genre=platformer` → filtered by genre
+
+```js
+router.post('/uploads', authMiddleware, async (req, res) => {
+  const { title, description, genre_tag_id, file_path } = req.body;
+  const userId = req.user.id;
+  await db.query(
+    'INSERT INTO uploads (user_id, title, description, genre_tag_id, file_path) VALUES ($1, $2, $3, $4, $5)',
+    [userId, title, description, genre_tag_id, file_path]
+  );
+  res.sendStatus(201);
+});
 ```
 
 ---
 
-### 3. Backend Development
+# 🔄 CONNECT FRONTEND + BACKEND
 
-- Setup Express server in `server/index.js`.
-- Connect to PostgreSQL using `pg` and the above environment variables.
-- Implement JWT-based authentication with roles.
-- Setup routes:
+## Step 1: Axios Requests
 
-  - `/signup` – register user with role
-  - `/login` – authenticate user and issue JWT
-  - `/upload` – upload images via Cloudinary, save URL with genre and user
-  - `/channels/:genre/messages` – real-time chat with Socket.IO
+In React components (e.g. Signup.jsx):
 
-- Use Cloudinary SDK for image uploads.
-- Integrate Socket.IO for chat.
-
----
-
-### 4. Frontend Setup
-
-#### a. Initialize React App
-
-```bash
-cd ..
-npx create-react-app client
-cd client
-npm install socket.io-client axios jwt-decode
+```js
+await axios.post('http://localhost:5000/api/signup', formData);
 ```
 
-#### b. Build UI
+## Step 2: Store JWT
 
-- Pages/components:
+After login:
 
-  - `Signup.jsx` – form with username, password, role (artist/developer)
-  - `Login.jsx` – form to authenticate and save JWT
-  - `Upload.jsx` – upload images, select genre
-  - `GenreChannel.jsx` – real-time chat per genre with Socket.IO
-  - `Profile.jsx` – view user uploads and info
+```js
+localStorage.setItem('token', res.data.token);
+```
 
-- Use React Router for navigation.
-- Use `axios` or `fetch` to communicate with backend.
+Add token to upload requests:
+
+```js
+axios.post('/uploads', data, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+```
 
 ---
 
-### 5. Running Your Project Locally
+# 🚀 Ready to Launch
 
-#### Start Backend
+1. Run backend:
 
 ```bash
 cd server
 node index.js
 ```
 
-#### Start Frontend
+2. Run frontend:
 
 ```bash
-cd ../client
+cd client
 npm start
 ```
 
-Open `http://localhost:3000` in your browser.
+3. Open: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-### 6. Deployment (Optional)
+## ✅ Final Checklist
 
-- Backend + DB → Deploy on [Render](https://render.com)
-- Frontend → Deploy on [Vercel](https://vercel.com)
-- Update frontend API URLs to your deployed backend URL.
+- [x] Signup/Login pages working
+- [x] Auth token flows correctly
+- [x] Upload page sends image data
+- [x] Explore page filters uploads
+- [x] Profile page shows current user’s uploads
+- [x] PostgreSQL schema matches ERD
 
----
-
-## Future Improvements
-
-- Add user profiles with editable info.
-- Implement notifications.
-- Add project collaboration tools.
-- Improve UX/UI design.
-
----
-
-## Contact
-
-Created by Suru Afariogun
-
----
-
-```
-
-```
+Let me know if you'd like instructions for chat/messaging, deployment, or editing profile next!
 
 ```
 

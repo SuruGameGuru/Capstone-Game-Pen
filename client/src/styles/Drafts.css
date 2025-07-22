@@ -1,0 +1,278 @@
+/* Drafts.css - GamePen Drafts Page */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.drafts-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Navigation Bar */
+.drafts-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1000;
+}
+
+.drafts-logo-title {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 36px;
+  text-transform: uppercase;
+}
+
+.drafts-logo-title .game {
+  font-style: italic;
+  background: linear-gradient(45deg, #0066cc, #0099ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.drafts-logo-title .pen {
+  color: #9933cc;
+}
+
+.drafts-navbar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.drafts-navbar a {
+  color: #60a5fa;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.drafts-navbar a:hover {
+  color: #93c5fd;
+}
+
+/* Main Content */
+.drafts-main {
+  flex: 1;
+  margin-top: 70px; /* Account for fixed header */
+  padding: 40px;
+}
+
+/* Page Title */
+.drafts-title {
+  color: #fff;
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 40px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Drafts Container */
+.drafts-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Drafts Grid */
+.drafts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+/* Draft Card */
+.draft-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.draft-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.draft-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.draft-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.draft-type {
+  background: #9933cc;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.draft-description {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.draft-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #999;
+}
+
+.draft-date {
+  font-weight: 500;
+}
+
+.draft-status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.draft-status.draft {
+  background: #ffd700;
+  color: #333;
+}
+
+.draft-status.in-progress {
+  background: #87ceeb;
+  color: #333;
+}
+
+.draft-status.completed {
+  background: #90ee90;
+  color: #333;
+}
+
+/* Action Buttons */
+.drafts-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.drafts-btn {
+  background: #9933cc;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.drafts-btn:hover {
+  background: #B366FF;
+}
+
+.drafts-btn.secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+}
+
+.drafts-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Empty State */
+.drafts-empty {
+  text-align: center;
+  color: white;
+  padding: 60px 20px;
+}
+
+.drafts-empty-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.drafts-empty-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.drafts-empty-text {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .drafts-header {
+    padding: 0 15px;
+  }
+  
+  .drafts-logo-title {
+    font-size: 24px;
+  }
+  
+  .drafts-main {
+    padding: 20px;
+  }
+  
+  .drafts-title {
+    font-size: 32px;
+    margin-bottom: 30px;
+  }
+  
+  .drafts-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .draft-card {
+    padding: 20px;
+  }
+  
+  .drafts-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .drafts-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+} 
