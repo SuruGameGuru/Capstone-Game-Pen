@@ -1,0 +1,515 @@
+/* DirectMessage.css - GamePen Direct Message Page */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.direct-message-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #E6B3FF 0%, #87CEEB 100%);
+  color: white;
+}
+
+/* Fixed Top Navigation Bar */
+.direct-message-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1000;
+}
+
+.direct-message-logo-title {
+  text-decoration: none;
+  font-size: 1.8rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.direct-message-logo-title .game {
+  color: #6366f1;
+}
+
+.direct-message-logo-title .pen {
+  color: #8b5cf6;
+}
+
+.direct-message-search {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 20px;
+}
+
+.direct-message-search input {
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.direct-message-search input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.direct-message-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.direct-message-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.direct-message-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.direct-message-icon.upload::before { content: "📤"; }
+.direct-message-icon.file::before { content: "📁"; }
+.direct-message-icon.drafts::before { content: "📝"; }
+.direct-message-icon.bell::before { content: "🔔"; }
+
+.direct-message-profile-dropdown {
+  position: relative;
+}
+
+.direct-message-profile-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.direct-message-profile-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.direct-message-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 8px 0;
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+}
+
+.direct-message-dropdown-username {
+  padding: 8px 16px;
+  color: #6366f1;
+  font-weight: 600;
+  border-bottom: 1px solid #333;
+  margin-bottom: 4px;
+}
+
+.direct-message-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.direct-message-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.direct-message-dropdown-divider {
+  height: 1px;
+  background: #333;
+  margin: 4px 0;
+}
+
+.direct-message-dropdown-logout {
+  color: #ef4444;
+}
+
+.direct-message-dropdown-logout:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.direct-message-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  margin-top: 60px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 32px rgba(80, 80, 160, 0.1);
+}
+
+/* Chat Header */
+.direct-message-chat-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 1rem;
+  transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.chat-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.friend-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.friend-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.friend-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.chat-status {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Messages Container */
+.direct-message-messages {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+.no-messages {
+  text-align: center;
+  color: #6b7280;
+  padding: 3rem;
+  font-style: italic;
+}
+
+.message {
+  margin-bottom: 1rem;
+  display: flex;
+}
+
+.message.sent {
+  justify-content: flex-end;
+}
+
+.message.received {
+  justify-content: flex-start;
+}
+
+.message-content {
+  max-width: 70%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  position: relative;
+}
+
+.message.sent .message-content {
+  background: #6366f1;
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.message.received .message-content {
+  background: #e5e7eb;
+  color: #374151;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.message-content p {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Message Input */
+.direct-message-input-form {
+  display: flex;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  gap: 0.75rem;
+}
+
+.direct-message-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 1.5rem;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.direct-message-input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.direct-message-input::placeholder {
+  color: #9ca3af;
+}
+
+.send-btn {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
+.send-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.direct-message-loading {
+  font-size: 1.5rem;
+  color: #6366f1;
+  text-align: center;
+  margin-top: 4rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .direct-message-header {
+    padding: 0 16px;
+  }
+  
+  .direct-message-search {
+    margin: 0 12px;
+  }
+  
+  .direct-message-icons {
+    gap: 12px;
+  }
+  
+  .direct-message-container {
+    margin: 60px 16px 16px 16px;
+    height: calc(100vh - 92px);
+  }
+  
+  .direct-message-chat-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .back-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    margin-right: 0.75rem;
+  }
+  
+  .friend-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+  
+  .friend-name {
+    font-size: 1rem;
+  }
+  
+  .direct-message-messages {
+    padding: 1rem;
+  }
+  
+  .message-content {
+    max-width: 85%;
+  }
+  
+  .direct-message-input-form {
+    padding: 0.75rem 1rem;
+  }
+  
+  .direct-message-input {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+  }
+  
+  .send-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    min-width: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .direct-message-header {
+    padding: 0 12px;
+  }
+  
+  .direct-message-logo-title {
+    font-size: 1.5rem;
+  }
+  
+  .direct-message-search {
+    display: none;
+  }
+  
+  .direct-message-icons {
+    gap: 8px;
+  }
+  
+  .direct-message-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+  
+  .direct-message-profile-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .direct-message-container {
+    margin: 60px 12px 12px 12px;
+    height: calc(100vh - 84px);
+    border-radius: 0.5rem;
+  }
+  
+  .direct-message-chat-header {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .back-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+  }
+  
+  .friend-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+  
+  .friend-name {
+    font-size: 0.9rem;
+  }
+  
+  .chat-status {
+    font-size: 0.7rem;
+  }
+  
+  .direct-message-messages {
+    padding: 0.75rem;
+  }
+  
+  .message-content {
+    max-width: 90%;
+    padding: 0.6rem 0.8rem;
+  }
+  
+  .message-content p {
+    font-size: 0.9rem;
+  }
+  
+  .message-time {
+    font-size: 0.7rem;
+  }
+  
+  .direct-message-input-form {
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .direct-message-input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  .send-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    min-width: 60px;
+  }
+} 

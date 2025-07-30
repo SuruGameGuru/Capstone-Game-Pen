@@ -1,0 +1,224 @@
+/* ImageCropper.css - Styles for image cropping functionality */
+
+.image-cropper-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 20px;
+}
+
+.image-cropper-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 600px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.image-cropper-header {
+  padding: 20px 24px 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 16px;
+}
+
+.image-cropper-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.image-cropper-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.image-cropper-close:hover {
+  background: #f3f4f6;
+}
+
+.image-cropper-content {
+  padding: 24px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.image-cropper-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: move;
+  user-select: none;
+}
+
+.image-cropper-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.image-cropper-crop-area {
+  position: absolute;
+  border: 2px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  cursor: move;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+}
+
+.image-cropper-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.image-cropper-handle-nw {
+  top: -6px;
+  left: -6px;
+  cursor: nw-resize;
+}
+
+.image-cropper-handle-ne {
+  top: -6px;
+  right: -6px;
+  cursor: ne-resize;
+}
+
+.image-cropper-handle-sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: sw-resize;
+}
+
+.image-cropper-handle-se {
+  bottom: -6px;
+  right: -6px;
+  cursor: se-resize;
+}
+
+.image-cropper-instructions {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 4px solid #3b82f6;
+}
+
+.image-cropper-instructions p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.image-cropper-actions {
+  padding: 16px 24px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  border-top: 1px solid #e5e7eb;
+}
+
+.image-cropper-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: none;
+}
+
+.image-cropper-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.image-cropper-btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.image-cropper-btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.image-cropper-btn-primary:hover {
+  background: #2563eb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .image-cropper-modal {
+    width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .image-cropper-container {
+    height: 300px;
+  }
+  
+  .image-cropper-content {
+    padding: 16px;
+  }
+  
+  .image-cropper-actions {
+    padding: 12px 16px 16px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .image-cropper-container {
+    height: 250px;
+  }
+  
+  .image-cropper-handle {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .image-cropper-handle-nw {
+    top: -5px;
+    left: -5px;
+  }
+  
+  .image-cropper-handle-ne {
+    top: -5px;
+    right: -5px;
+  }
+  
+  .image-cropper-handle-sw {
+    bottom: -5px;
+    left: -5px;
+  }
+  
+  .image-cropper-handle-se {
+    bottom: -5px;
+    right: -5px;
+  }
+} 

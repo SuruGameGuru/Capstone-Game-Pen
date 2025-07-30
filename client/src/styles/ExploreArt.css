@@ -1,0 +1,100 @@
+/* ExploreArt.css - GamePen ExploreArt Page */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body,
+html {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    sans-serif;
+}
+
+.exploreart-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e6b3ff 0%, #87ceeb 100%);
+  color: white;
+}
+.explore-header {
+  background: #111;
+  color: #fff;
+  border-bottom: none;
+}
+.explore-title {
+  color: #d946ef;
+}
+.explore-box {
+  border: 2px solid #f3c4e7;
+  background: #fff;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.explore-box:hover {
+  border: 2px solid #d946ef;
+  box-shadow: 0 2px 12px rgba(217, 70, 239, 0.08);
+}
+
+/* Image styles for art thumbnails */
+.explore-box-image {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.explore-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.explore-box-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.explore-box-type {
+  display: inline-block;
+  background: linear-gradient(45deg, #d946ef, #f3c4e7);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.explore-box-description {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.explore-box-author {
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+  margin-top: auto;
+}
+
+/* Copy other styles from Explore.css as needed */

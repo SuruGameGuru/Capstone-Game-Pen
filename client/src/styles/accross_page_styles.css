@@ -1,0 +1,155 @@
+/* accross_page_styles.css - Shared styles for all pages */
+
+html, body {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #E6B3FF 0%, #87CEEB 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Shared panel style */
+.page-panel {
+  background: #9933cc;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Shared header bar */
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1000;
+}
+
+.page-logo-title {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 54px;
+  text-transform: uppercase;
+}
+.page-logo-title .game {
+  font-style: italic;
+  color: #0066cc;
+}
+.page-logo-title .pen {
+  color: #9933cc;
+}
+
+.page-concept-text {
+  color: white;
+  font-style: italic;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Shared main content area */
+.page-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 90px;
+  padding: 20px;
+}
+
+/* Shared form styles */
+.page-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 2rem;
+}
+.page-input-group {
+  margin-bottom: 1rem;
+}
+.page-input, .page-password-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-top: 0.2rem;
+}
+.page-input::placeholder, .page-password-input::placeholder {
+  color: #bbb;
+}
+.page-password-input-container {
+  display: flex;
+  align-items: center;
+}
+.page-password-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  margin-left: -2.2rem;
+  cursor: pointer;
+  color: #333;
+}
+.page-button {
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.2s;
+}
+.page-button:disabled {
+  background: #444;
+  cursor: not-allowed;
+}
+.page-button:hover:not(:disabled) {
+  background: #222;
+}
+
+/* Shared error message */
+.page-error-message {
+  color: #ff3333;
+  background: #fff0f0;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+/* Shared link styles */
+.page-link {
+  color: #0066cc;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .page-header {
+    height: 60px;
+    font-size: 1.2rem;
+    padding: 0 10px;
+  }
+  .page-logo-title {
+    font-size: 2rem;
+  }
+  .page-panel {
+    max-width: 98vw;
+    padding: 0.5rem;
+  }
+  .page-form {
+    padding: 1rem;
+  }
+} 

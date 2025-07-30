@@ -1,0 +1,193 @@
+/* UserPopup.css - GamePen User Popup Component */
+.user-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.user-popup {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: popupSlideIn 0.2s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.user-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.user-popup-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.user-popup-info {
+  flex: 1;
+}
+
+.user-popup-name {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.user-popup-status {
+  font-size: 0.9rem;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.user-popup-close {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.user-popup-close:hover {
+  background: #dc2626;
+}
+
+.user-popup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-popup-action-btn {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.user-popup-action-btn.message {
+  background: #6366f1;
+  color: white;
+}
+
+.user-popup-action-btn.message:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
+.user-popup-action-btn.friend {
+  background: #10b981;
+  color: white;
+}
+
+.user-popup-action-btn.friend:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.user-popup-action-btn.pending {
+  background: #f59e0b;
+  color: white;
+  cursor: not-allowed;
+}
+
+.user-popup-action-btn.pending:hover {
+  background: #f59e0b;
+  transform: none;
+}
+
+.user-popup-action-btn.remove {
+  background: #ef4444;
+  color: white;
+}
+
+.user-popup-action-btn.remove:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.user-popup-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.user-popup-action-btn:disabled:hover {
+  transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .user-popup {
+    margin: 1rem;
+    min-width: 280px;
+    padding: 1rem;
+  }
+  
+  .user-popup-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  
+  .user-popup-name {
+    font-size: 1.1rem;
+  }
+  
+  .user-popup-status {
+    font-size: 0.8rem;
+  }
+  
+  .user-popup-action-btn {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+  }
+} 

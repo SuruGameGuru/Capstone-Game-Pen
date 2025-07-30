@@ -1,4 +1,62 @@
 /* Upload.css - GamePen Upload Page */
+
+/* Upload Modal Styles */
+.upload-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.upload-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.25);
+}
+
+.upload-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.upload-modal-header h2 {
+  margin: 0;
+  color: #374151;
+  font-size: 20px;
+}
+
+.upload-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.upload-modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
 * {
   margin: 0;
   padding: 0;
@@ -12,9 +70,8 @@ body, html {
 
 .upload-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  flex-direction: column;
+  background: linear-gradient(180deg, #E6B3FF 0%, #87CEEB 100%);
+  color: white;
 }
 
 /* Top Navigation Bar */
@@ -90,6 +147,82 @@ body, html {
 
 .upload-navbar a:hover {
   color: #93c5fd;
+}
+
+/* Profile Dropdown Styles */
+.upload-profile-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.upload-profile-btn {
+  background: #60a5fa;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.upload-profile-btn:hover {
+  background: #93c5fd;
+}
+
+.upload-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 1001;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.upload-dropdown-username {
+  padding: 12px 16px;
+  background: #f3f4f6;
+  font-weight: bold;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.upload-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.upload-dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+.upload-dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.upload-dropdown-logout {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.upload-dropdown-logout:hover {
+  background: #fef2f2;
 }
 
 /* Main Content */
@@ -287,5 +420,213 @@ body, html {
   
   .upload-box-icon {
     font-size: 36px;
+  }
+} 
+
+/* Popup Styles for MyArt Page */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.popup-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.popup-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.popup-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.popup-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.popup-body {
+  padding: 24px;
+}
+
+.popup-image {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.popup-image img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.popup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.popup-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  background: #f9fafb;
+}
+
+.popup-section h4 {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.popup-section textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  margin-bottom: 12px;
+}
+
+.popup-section textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.popup-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.popup-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.popup-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.popup-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.popup-btn-secondary:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.popup-btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.popup-btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Loading state */
+.upload-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+  color: white;
+}
+
+/* Responsive design for popup */
+@media (max-width: 768px) {
+  .popup-content {
+    margin: 20px;
+    max-width: calc(100vw - 40px);
+  }
+  
+  .popup-header {
+    padding: 20px 20px 12px 20px;
+  }
+  
+  .popup-body {
+    padding: 20px;
+  }
+  
+  .popup-actions {
+    gap: 16px;
+  }
+  
+  .popup-section {
+    padding: 16px;
+  }
+  
+  .popup-btn {
+    width: 100%;
+    margin-right: 0;
   }
 } 

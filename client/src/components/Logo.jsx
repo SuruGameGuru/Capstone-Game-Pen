@@ -1,19 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Logo = () => {
   return (
-    <div
-      style={{
-        fontSize: '2rem',
-        fontWeight: 'bold',
-        background: 'white',
-        color: '#6c5ce7',
-        padding: '0.4rem 1rem',
-        borderRadius: '8px',
-      }}
-    >
-      GP
-    </div>
+    <Link to="/" className="gamepen-logo-link">
+      <span className="gamepen-logo game">GAME</span>
+      <span className="gamepen-logo pen">PEN</span>
+    </Link>
   );
 };
 

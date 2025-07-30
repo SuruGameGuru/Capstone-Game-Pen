@@ -1,9 +1,45 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Drafts.css';
 import '../styles/Profile.css'; // For profile-route-btn
 
 const Drafts = () => {
+  const navigate = useNavigate();
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const [userData, setUserData] = useState({
+    username: 'User Name'
+  });
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleDropdownItemClick = (route) => {
+    setShowProfileDropdown(false);
+    navigate(route);
+  };
+
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    navigate('/');
+  };
+
   const [drafts, setDrafts] = useState([
     {
       id: 1,
@@ -97,18 +133,52 @@ const Drafts = () => {
     <div className="drafts-page">
       {/* Fixed Top Navigation Bar */}
       <header className="drafts-header">
-        <div className="drafts-logo-title">
+        <Link to="/" className="drafts-logo-title">
           <span className="game">GAME</span>
           <span className="pen">PEN</span>
-        </div>
+        </Link>
         
         <nav className="drafts-navbar">
           <Link to="/">Home</Link>
           <Link to="/explore">Explore</Link>
           <Link to="/upload">Upload</Link>
-          <Link to="/profile" className="profile-route-btn" title="Profile">
-            <span role="img" aria-label="profile">👤</span>
-          </Link>
+          <div className="drafts-profile-dropdown" ref={dropdownRef}>
+            <button onClick={handleProfileClick} className="drafts-profile-btn">
+              Profile ▼
+            </button>
+            {showProfileDropdown && (
+              <div className="drafts-dropdown-menu">
+                <div className="drafts-dropdown-username">
+                  {userData.username}
+                </div>
+                <button 
+                  onClick={() => handleDropdownItemClick('/profile')}
+                  className="drafts-dropdown-item"
+                >
+                  My Profile
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/upload')}
+                  className="drafts-dropdown-item"
+                >
+                  Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/drafts')}
+                  className="drafts-dropdown-item"
+                >
+                  My Drafts
+                </button>
+                <div className="drafts-dropdown-divider"></div>
+                <button 
+                  onClick={handleLogout}
+                  className="drafts-dropdown-item drafts-dropdown-logout"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
 

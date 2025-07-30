@@ -12,9 +12,8 @@ body, html {
 
 .explore-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  flex-direction: column;
+  background: linear-gradient(180deg, #E6B3FF 0%, #87CEEB 100%);
+  color: white;
 }
 
 /* Top Navigation Bar */
@@ -24,7 +23,9 @@ body, html {
   left: 0;
   right: 0;
   height: 70px;
-  background: #000;
+  background: #111;
+  color: #fff;
+  border-bottom: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -92,6 +93,82 @@ body, html {
   color: #93c5fd;
 }
 
+/* Profile Dropdown Styles */
+.explore-profile-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.explore-profile-btn {
+  background: #60a5fa;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.explore-profile-btn:hover {
+  background: #93c5fd;
+}
+
+.explore-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 1001;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.explore-dropdown-username {
+  padding: 12px 16px;
+  background: #f3f4f6;
+  font-weight: bold;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.explore-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.explore-dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+.explore-dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.explore-dropdown-logout {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.explore-dropdown-logout:hover {
+  background: #fef2f2;
+}
+
 /* Main Content */
 .explore-main {
   flex: 1;
@@ -150,15 +227,40 @@ body, html {
   margin-bottom: 15px;
 }
 
+.explore-box-image {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.explore-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
 .explore-box-title {
   font-size: 18px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .explore-box-type {
-  background: #9933cc;
+  display: inline-block;
+  background: linear-gradient(45deg, #0066cc, #0099ff);
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
@@ -172,6 +274,18 @@ body, html {
   color: #666;
   font-size: 14px;
   line-height: 1.4;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.explore-box-author {
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+  margin-top: auto;
 }
 
 /* Show More Button */

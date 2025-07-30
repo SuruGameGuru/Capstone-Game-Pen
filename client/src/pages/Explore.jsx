@@ -1,15 +1,79 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Logo from '../components/Logo';
+import { imageService } from '../services/imageService';
 import '../styles/Explore.css';
 import '../styles/Profile.css'; // Import for profile button style
 
 const Explore = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [displayCount, setDisplayCount] = useState(30);
+  const [images, setImages] = useState([]);
+  const [filteredImages, setFilteredImages] = useState([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Sample content data - in a real app, this would come from an API
-  const allContent = [
+  const [userData, setUserData] = useState({
+    username: 'User Name'
+  });
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleDropdownItemClick = (route) => {
+    setShowProfileDropdown(false);
+    navigate(route);
+  };
+
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    navigate('/');
+  };
+
+  // Fetch images from API
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        setIsInitialLoading(true);
+        const fetchedImages = await imageService.getImages({ 
+          is_public: true, 
+          limit: 100 
+        });
+        setImages(fetchedImages);
+        setFilteredImages(fetchedImages);
+      } catch (error) {
+        console.error('Error fetching images:', error);
+        // Fallback to sample data if API fails
+        setImages(getSampleContent());
+        setFilteredImages(getSampleContent());
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    fetchImages();
+  }, []);
+
+  // Sample content data as fallback
+  const getSampleContent = () => [
     { id: 1, title: 'Space Adventure Game', type: 'Game', icon: '🎮', description: '2D platformer with unique gravity mechanics' },
     { id: 2, title: 'Character Concept Art', type: 'Art', icon: '🎨', description: 'Fantasy RPG character designs' },
     { id: 3, title: 'Level Design Sketches', type: 'Game', icon: '🏗️', description: 'Environmental concepts for game stages' },
@@ -62,6 +126,21 @@ const Explore = () => {
     { id: 50, title: 'Visual Novel', type: 'Game', icon: '📖', description: 'Story-focused narrative game' }
   ];
 
+  // Filter images based on search term
+  useEffect(() => {
+    if (images.length > 0) {
+      const filtered = images.filter(image => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          (image.description && image.description.toLowerCase().includes(searchLower)) ||
+          (image.genre && image.genre.toLowerCase().includes(searchLower)) ||
+          (image.username && image.username.toLowerCase().includes(searchLower))
+        );
+      });
+      setFilteredImages(filtered);
+    }
+  }, [searchTerm, images]);
+
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -72,34 +151,50 @@ const Explore = () => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    setDisplayCount(prev => Math.min(prev + 30, allContent.length));
+    setDisplayCount(prev => Math.min(prev + 30, filteredImages.length));
     setIsLoading(false);
   };
 
   const handleContentClick = (content) => {
-    // Handle content click - would route to presentation/playable version
-    console.log('Opening content:', content);
-    // In a real app, this would navigate to the content detail page
-    // navigate(`/content/${content.id}`);
+    if (content.url) {
+      // Real image - navigate to display page
+      navigate(`/display/${content.id}`);
+    } else {
+      // Sample data - just log for now
+      console.log('Opening content:', content);
+    }
   };
 
-  const filteredContent = allContent.filter(content =>
-    content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    content.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    content.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const displayedContent = filteredImages.slice(0, displayCount);
+  const hasMoreContent = displayCount < filteredImages.length;
 
-  const displayedContent = filteredContent.slice(0, displayCount);
-  const hasMoreContent = displayCount < filteredContent.length;
+  // Helper function to get content type icon
+  const getContentIcon = (genre) => {
+    const genreLower = genre?.toLowerCase();
+    if (genreLower === 'art' || genreLower === 'drawing' || genreLower === 'painting') return '🎨';
+    if (genreLower === 'game' || genreLower === 'gaming') return '🎮';
+    if (genreLower === 'audio' || genreLower === 'music' || genreLower === 'sound') return '🎵';
+    return '📄';
+  };
+
+  if (isInitialLoading) {
+    return (
+      <div className="explore-page">
+        <header className="explore-header">
+          <Logo />
+        </header>
+        <div className="explore-loading">
+          <div className="loading-spinner">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="explore-page">
       {/* Fixed Top Navigation Bar */}
       <header className="explore-header">
-        <div className="explore-logo-title">
-          <span className="game">GAME</span>
-          <span className="pen">PEN</span>
-        </div>
+        <Logo />
         
         <div className="explore-search">
           <input
@@ -113,10 +208,43 @@ const Explore = () => {
         <nav className="explore-navbar">
           <Link to="/">Home</Link>
           <Link to="/upload">Upload</Link>
-          <Link to="/profile" className="profile-route-btn" title="Profile">
-            {/* You can use a user icon, emoji, or initials here */}
-            <span role="img" aria-label="profile">👤</span>
-          </Link>
+          <div className="explore-profile-dropdown" ref={dropdownRef}>
+            <button onClick={handleProfileClick} className="explore-profile-btn">
+              Profile ▼
+            </button>
+            {showProfileDropdown && (
+              <div className="explore-dropdown-menu">
+                <div className="explore-dropdown-username">
+                  {userData.username}
+                </div>
+                <button 
+                  onClick={() => handleDropdownItemClick('/profile')}
+                  className="explore-dropdown-item"
+                >
+                  My Profile
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/upload')}
+                  className="explore-dropdown-item"
+                >
+                  Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/drafts')}
+                  className="explore-dropdown-item"
+                >
+                  My Drafts
+                </button>
+                <div className="explore-dropdown-divider"></div>
+                <button 
+                  onClick={handleLogout}
+                  className="explore-dropdown-item explore-dropdown-logout"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
 
@@ -134,10 +262,31 @@ const Explore = () => {
                     className="explore-box"
                     onClick={() => handleContentClick(content)}
                   >
-                    <div className="explore-box-icon">{content.icon}</div>
-                    <h3 className="explore-box-title">{content.title}</h3>
-                    <span className="explore-box-type">{content.type}</span>
-                    <p className="explore-box-description">{content.description}</p>
+                    {content.url ? (
+                      // Real image from API
+                      <div className="explore-box-image">
+                        <img 
+                          src={content.url} 
+                          alt={content.description || "Content"} 
+                          className="explore-thumbnail"
+                        />
+                      </div>
+                    ) : (
+                      // Fallback icon for sample data
+                      <div className="explore-box-icon">{content.icon}</div>
+                    )}
+                    <h3 className="explore-box-title">
+                      {content.description || content.title || "Untitled"}
+                    </h3>
+                    <span className="explore-box-type">
+                      {content.genre || content.type || "Content"}
+                    </span>
+                    <p className="explore-box-description">
+                      {content.description || "No description available"}
+                    </p>
+                    {content.username && (
+                      <p className="explore-box-author">by {content.username}</p>
+                    )}
                   </div>
                 ))}
               </div>

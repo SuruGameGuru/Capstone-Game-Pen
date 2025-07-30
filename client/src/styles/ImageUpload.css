@@ -1,0 +1,139 @@
+/* ImageUpload.css */
+.image-upload {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.upload-section {
+  margin-bottom: 20px;
+}
+
+.file-input-label {
+  display: block;
+  cursor: pointer;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.file-input-label:hover {
+  border-color: #60a5fa;
+  background-color: #f8fafc;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-placeholder span {
+  font-size: 48px;
+}
+
+.upload-placeholder p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-group input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.upload-button {
+  background: #60a5fa;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 8px;
+}
+
+.upload-button:hover:not(:disabled) {
+  background: #3b82f6;
+}
+
+.upload-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .image-upload {
+    margin: 10px;
+    padding: 16px;
+  }
+  
+  .file-input-label {
+    padding: 30px 16px;
+  }
+  
+  .upload-placeholder span {
+    font-size: 36px;
+  }
+  
+  .upload-placeholder p {
+    font-size: 14px;
+  }
+} 
