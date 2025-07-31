@@ -1,0 +1,35 @@
+/* ExploreGames.css - GamePen ExploreGames Page */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.exploregames-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #E6B3FF 0%, #87CEEB 100%);
+  color: white;
+}
+.explore-header {
+  background: #111;
+  color: #fff;
+  border-bottom: none;
+}
+.explore-title {
+  color: #2563eb;
+}
+.explore-box {
+  border: 2px solid #b6e6fa;
+  background: #fff;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.explore-box:hover {
+  border: 2px solid #2563eb;
+  box-shadow: 0 2px 12px rgba(37,99,235,0.08);
+}
+/* Copy other styles from Explore.css as needed */ 

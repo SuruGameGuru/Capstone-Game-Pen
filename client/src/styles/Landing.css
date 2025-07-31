@@ -1,0 +1,379 @@
+/* Landing.css - GamePen Layout */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.landing-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #E6B3FF 0%, #87CEEB 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Navigation Bar */
+.landing-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1000;
+}
+
+.landing-header-inner {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.landing-logo-title {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 24px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.landing-logo-title .game {
+  font-style: italic;
+  color: #1e3a8a;
+}
+
+.landing-logo-title .pen {
+  color: #60a5fa;
+}
+
+.landing-search {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 40px;
+  flex-shrink: 0;
+}
+
+.landing-search input {
+  width: 100%;
+  height: 40px;
+  background: #777;
+  border: none;
+  border-radius: 4px;
+  padding: 0 15px;
+  color: white;
+  font-size: 16px;
+}
+
+.landing-search input::placeholder {
+  color: #ccc;
+}
+
+.landing-navbar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.landing-navbar a {
+  color: #60a5fa;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.landing-navbar a:hover {
+  color: #93c5fd;
+}
+
+/* Profile Dropdown Styles */
+.landing-profile-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.landing-profile-btn {
+  background: #60a5fa;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.landing-profile-btn:hover {
+  background: #93c5fd;
+}
+
+.landing-logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.landing-logout-btn:hover {
+  background: #f87171;
+}
+
+.landing-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 1001;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.landing-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.landing-dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+.landing-dropdown-item:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.landing-dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.landing-dropdown-logout {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.landing-dropdown-logout:hover {
+  background: #fef2f2;
+}
+
+/* Main Content Layout */
+.landing-main {
+  display: flex;
+  flex: 1;
+  margin-top: 70px; /* Account for fixed navbar */
+}
+
+/* Left Sidebar */
+.landing-sidebar {
+  width: 20%;
+  background: linear-gradient(180deg, #4f46e5 0%, #1e40af 100%);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-genres-header {
+  background: #000;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.landing-genres-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex: 1;
+}
+
+.landing-genre-block {
+  height: 60px;
+  background: #D9D9D9;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.landing-genre-block:hover {
+  background: #999;
+  color: white;
+}
+
+.landing-genre-block:focus {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* Main Content Area */
+.landing-content {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.landing-content-box {
+  background: #D9D9D9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #000;
+  /* Make both boxes the same size and scale with viewport */
+  height: 40vh;
+  min-height: 200px;
+  max-height: 400px;
+  font-size: clamp(20px, 3vw, 32px);
+  /* Add hover effect with thin blue border */
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.landing-content-box:hover {
+  border-color: #60a5fa;
+}
+
+.landing-game-demos {
+  /* Same size as art section */
+}
+
+.landing-art-section {
+  /* Same size as game demos */
+  position: relative;
+}
+
+.landing-art-thumbnail {
+  border-radius: 1rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .landing-header {
+    height: auto;
+    min-height: 70px;
+  }
+  
+  .landing-header-inner {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  
+  .landing-search {
+    margin: 10px 0;
+    max-width: 100%;
+  }
+  
+  .landing-main {
+    flex-direction: column;
+    margin-top: auto; /* Adjust for variable header height */
+  }
+  
+  .landing-sidebar {
+    width: 100%;
+    height: auto;
+  }
+  
+  .landing-genres-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .landing-genre-block {
+    width: calc(50% - 5px);
+    height: 50px;
+  }
+  
+  .landing-content {
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  .landing-content-box {
+    height: 30vh;
+    min-height: 150px;
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-header-inner {
+    padding: 5px 0;
+  }
+  
+  .landing-logo-title {
+    font-size: 20px;
+  }
+  
+  .landing-search {
+    margin: 5px 0;
+  }
+  
+  .landing-search input {
+    height: 35px;
+    font-size: 14px;
+  }
+  
+  .landing-navbar {
+    gap: 10px;
+  }
+  
+  .landing-navbar a {
+    font-size: 14px;
+  }
+  
+  .landing-content-box {
+    height: 25vh;
+    min-height: 120px;
+    max-height: 250px;
+  }
+}
