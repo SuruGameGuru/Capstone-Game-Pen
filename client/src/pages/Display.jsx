@@ -11,6 +11,7 @@ const Display = () => {
   const { user } = useUser();
   const [image, setImage] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [dislikeCount, setDislikeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,10 +33,14 @@ const Display = () => {
           setLikeCount(imageData.like_count || 0);
           setDislikeCount(imageData.dislike_count || 0);
           
-          // Check if current user has liked this image
+          // Check if current user has liked or disliked this image
           if (user) {
-            const hasLiked = await imageService.checkIfLiked(id);
+            const [hasLiked, hasDisliked] = await Promise.all([
+              imageService.checkIfLiked(id),
+              imageService.checkIfDisliked(id)
+            ]);
             setLiked(hasLiked);
+            setDisliked(hasDisliked);
           }
         } else {
           setError('Image not found');
@@ -82,11 +87,25 @@ const Display = () => {
     }
     
     try {
-      await imageService.likeImage(id);
-      setLiked(true);
-      setLikeCount(prev => prev + 1);
+      if (liked) {
+        // User already liked, so unlike
+        await imageService.unlikeImage(id);
+        setLiked(false);
+        setLikeCount(prev => prev - 1);
+      } else {
+        // User hasn't liked, so like
+        await imageService.likeImage(id);
+        setLiked(true);
+        setLikeCount(prev => prev + 1);
+        
+        // Backend will automatically remove dislike if it exists
+        if (disliked) {
+          setDisliked(false);
+          setDislikeCount(prev => prev - 1);
+        }
+      }
     } catch (error) {
-      console.error('Error liking image:', error);
+      console.error('Error handling like:', error);
       if (error.message.includes('401')) {
         alert('Please log in to like images');
         navigate('/login');
@@ -103,16 +122,30 @@ const Display = () => {
     }
     
     try {
-      await imageService.unlikeImage(id);
-      setLiked(false);
-      setLikeCount(prev => prev - 1);
+      if (disliked) {
+        // User already disliked, so undislike
+        await imageService.undislikeImage(id);
+        setDisliked(false);
+        setDislikeCount(prev => prev - 1);
+      } else {
+        // User hasn't disliked, so dislike
+        await imageService.dislikeImage(id);
+        setDisliked(true);
+        setDislikeCount(prev => prev + 1);
+        
+        // Backend will automatically remove like if it exists
+        if (liked) {
+          setLiked(false);
+          setLikeCount(prev => prev - 1);
+        }
+      }
     } catch (error) {
-      console.error('Error unliking image:', error);
+      console.error('Error handling dislike:', error);
       if (error.message.includes('401')) {
-        alert('Please log in to unlike images');
+        alert('Please log in to dislike images');
         navigate('/login');
       } else {
-        alert('Failed to unlike image. Please try again.');
+        alert('Failed to dislike image. Please try again.');
       }
     }
   };
@@ -431,10 +464,16 @@ const Display = () => {
             <div className="display-actions">
               <div className="display-action-column">
                 <button 
-                  onClick={liked ? handleDislike : handleLike} 
+                  onClick={handleLike} 
                   className={`display-like-btn ${liked ? 'liked' : ''}`}
                 >
-                  {liked ? '💔 Unlike' : '❤️ Like'} ({likeCount})
+                  ❤️ Like ({likeCount})
+                </button>
+                <button 
+                  onClick={handleDislike} 
+                  className={`display-dislike-btn ${disliked ? 'disliked' : ''}`}
+                >
+                  👎 Dislike ({dislikeCount})
                 </button>
               </div>
               <div className="display-action-column">

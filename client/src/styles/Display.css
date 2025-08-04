@@ -285,6 +285,14 @@ body, html {
   background: #dc2626;
 }
 
+.display-dislike-btn.disliked {
+  background: #10b981;
+}
+
+.display-dislike-btn.disliked:hover {
+  background: #059669;
+}
+
 .display-back-btn {
   background: #6b7280;
 }
