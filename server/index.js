@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   // Join a genre channel
-  socket.on('join-genre-channel', (genre) => {
+  socket.on('join-genre-channel', async (genre) => {
     socket.join(genre);
     
     // Track user in channel
@@ -73,6 +73,21 @@ io.on('connection', (socket) => {
       genre: genre,
       users: currentUsers
     });
+    
+    // Load existing messages for the genre channel
+    try {
+      const messages = await loadGenreMessages(genre);
+      socket.emit('genre-messages-loaded', {
+        genre: genre,
+        messages: messages
+      });
+    } catch (error) {
+      console.error('Error loading genre messages:', error);
+      socket.emit('genre-messages-error', { 
+        genre: genre,
+        message: 'Failed to load messages' 
+      });
+    }
     
     console.log(`User ${socket.username || 'Anonymous'} joined ${genre} channel`);
   });
@@ -299,6 +314,24 @@ async function loadDirectMessages(fromUserId, toUserId) {
     return result.rows;
   } catch (error) {
     console.error('Error loading direct messages from database:', error);
+    throw error;
+  }
+}
+
+// Helper function to load genre messages from database
+async function loadGenreMessages(genre) {
+  try {
+    const pool = require('./db');
+    const query = `
+      SELECT id, user_id, username, message, genre, timestamp
+      FROM chat_messages
+      WHERE genre = $1
+      ORDER BY timestamp ASC
+    `;
+    const result = await pool.query(query, [genre]);
+    return result.rows;
+  } catch (error) {
+    console.error('Error loading genre messages from database:', error);
     throw error;
   }
 }

@@ -31,6 +31,15 @@ class ChatService {
       this.isConnected = false;
     });
 
+    // Register global message loading listeners
+    this.socket.on('genre-messages-loaded', (data) => {
+      this.notifyMessageCallbacks('genre-messages-loaded', data);
+    });
+
+    this.socket.on('genre-messages-error', (data) => {
+      this.notifyMessageCallbacks('genre-messages-error', data);
+    });
+
     return this.socket;
   }
 
@@ -83,6 +92,19 @@ class ChatService {
         }
       });
 
+      // Message loading listeners are now global (registered in connect method)
+      // this.socket.on('genre-messages-loaded', (data) => {
+      //   if (data.genre === genre) {
+      //     this.notifyMessageCallbacks('genre-messages-loaded', data);
+      //   }
+      // });
+
+      // this.socket.on('genre-messages-error', (data) => {
+      //   if (data.genre === genre) {
+      //     this.notifyMessageCallbacks('genre-messages-error', data);
+      //   }
+      // });
+
       this.registeredListeners.add(channelKey);
     }
   }
@@ -100,6 +122,9 @@ class ChatService {
       this.socket.off('user-joined');
       this.socket.off('user-left');
       this.socket.off('channel-users');
+      // Don't remove message loading listeners as they're needed when rejoining
+      // this.socket.off('genre-messages-loaded');
+      // this.socket.off('genre-messages-error');
       this.registeredListeners.delete(channelKey);
     }
   }

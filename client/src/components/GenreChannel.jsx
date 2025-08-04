@@ -38,6 +38,18 @@ const GenreChannel = ({ genre, username, userId }) => {
     }
   }, [genre, username]);
 
+  const handleGenreMessagesLoaded = useCallback((data) => {
+    if (data.genre === genre) {
+      setMessages(data.messages);
+    }
+  }, [genre]);
+
+  const handleGenreMessagesError = useCallback((data) => {
+    if (data.genre === genre) {
+      console.error('Failed to load genre messages:', data.message);
+    }
+  }, [genre]);
+
   const handleTypingIndicator = useCallback((data) => {
     if (data.userId !== chatService.socket?.id) {
       if (data.username) {
@@ -80,6 +92,8 @@ const GenreChannel = ({ genre, username, userId }) => {
     chatService.onMessage('user-joined', handleUserJoined);
     chatService.onMessage('user-left', handleUserLeft);
     chatService.onMessage('channel-users', handleChannelUsers);
+    chatService.onMessage('genre-messages-loaded', handleGenreMessagesLoaded);
+    chatService.onMessage('genre-messages-error', handleGenreMessagesError);
 
     // Listen for typing indicators
     chatService.listenForTyping(handleTypingIndicator);
@@ -91,9 +105,12 @@ const GenreChannel = ({ genre, username, userId }) => {
       chatService.offMessage('user-joined');
       chatService.offMessage('user-left');
       chatService.offMessage('channel-users');
-      chatService.clearAllCallbacks();
+      chatService.offMessage('genre-messages-loaded');
+      chatService.offMessage('genre-messages-error');
+      // Don't clear all callbacks as it prevents message loading when rejoining
+      // chatService.clearAllCallbacks();
     };
-  }, [genre, username, userId, handleGenreMessage, handleUserJoined, handleUserLeft, handleChannelUsers, handleTypingIndicator]);
+  }, [genre, username, userId, handleGenreMessage, handleUserJoined, handleUserLeft, handleChannelUsers, handleGenreMessagesLoaded, handleGenreMessagesError, handleTypingIndicator]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
