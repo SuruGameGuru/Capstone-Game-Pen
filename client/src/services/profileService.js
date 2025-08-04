@@ -8,7 +8,7 @@ const profileService = {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}` // Uncomment when auth is enabled
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -38,7 +38,7 @@ const profileService = {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}` // Uncomment when auth is enabled
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(profileData)
       });

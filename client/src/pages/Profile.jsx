@@ -1,12 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
 import { profileService } from '../services/profileService';
+import authService from '../services/authService';
 import DominantColorThumbnail from '../components/DominantColorThumbnail';
 import ImageCropper from '../components/ImageCropper';
 import '../styles/Profile.css';
 
 const Profile = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -57,23 +60,37 @@ const Profile = () => {
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
-        // For now, we'll use a hardcoded user ID since auth is disabled
-        const userId = 1; // This should come from auth context when enabled
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+        
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+        
         const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
         
         setUserData({
-          username: profileData.username || 'User Name',
+          username: profileData.username || user.username || 'User Name',
           profilePic: profileData.profilePicture || null,
           bannerImage: profileData.bannerImage || null
         });
       } catch (error) {
         console.error('Error loading user profile:', error);
-        // Keep default values if loading fails
+        // Set default values if loading fails
+        setUserData({
+          username: user?.username || 'User Name',
+          profilePic: null,
+          bannerImage: null
+        });
       }
     };
 
-    loadUserProfile();
-  }, []);
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -126,7 +143,7 @@ const Profile = () => {
 
   const handleLogout = () => {
     setShowProfileDropdown(false);
-    navigate('/');
+    authService.logout();
   };
 
   const handleEditProfile = () => {
@@ -195,13 +212,21 @@ const Profile = () => {
       setIsSaving(true);
       setSaveError('');
 
-      // For now, we'll use a hardcoded user ID since auth is disabled
-      const userId = 1; // This should come from auth context when enabled
+      if (!user) {
+        setSaveError('No user logged in');
+        console.error('No user logged in');
+        return;
+      }
+
+      const userId = user.id;
+      console.log('Saving profile for user ID:', userId);
 
       // Prepare profile data for update
       const profileData = {
         username: editData.username
       };
+
+      console.log('Profile data to save:', profileData);
 
       // If there are new images, upload them to Cloudinary first
       if (editData.bannerImage && editData.bannerImage !== userData.bannerImage) {
@@ -226,8 +251,12 @@ const Profile = () => {
         }
       }
 
+      console.log('Calling profileService.updateUserProfile...');
+      
       // Update profile in backend
       const updatedUser = await profileService.updateUserProfile(userId, profileData);
+
+      console.log('Profile update response:', updatedUser);
 
       // Update local state with the response from server
       setUserData({

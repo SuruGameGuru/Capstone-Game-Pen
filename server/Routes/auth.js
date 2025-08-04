@@ -183,21 +183,131 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Signup endpoint (alias for register)
+router.post('/signup', async (req, res) => {
+  try {
+    const { username, email, password, confirmPassword, dateOfBirth } = req.body;
+
+    // Validation
+    if (!username || !email || !password || !confirmPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: 'Password must be at least 6 characters' });
+    }
+
+    // Check if user already exists
+    const existingUser = await pool.query(
+      'SELECT * FROM users WHERE email = $1 OR username = $2',
+      [email, username]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Insert new user
+    const newUser = await pool.query(
+      'INSERT INTO users (username, email, password_hash, date_of_birth) VALUES ($1, $2, $3, $4) RETURNING id, username, email',
+      [username, email, passwordHash, dateOfBirth]
+    );
+
+    // Create JWT token
+    const token = jwt.sign(
+      { id: newUser.rows[0].id, username: newUser.rows[0].username },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: newUser.rows[0].id,
+        username: newUser.rows[0].username,
+        email: newUser.rows[0].email,
+      },
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Logout endpoint (client-side token removal)
+router.post('/logout', (req, res) => {
+  // JWT tokens are stateless, so we just return success
+  // The client will remove the token from localStorage
+  res.json({ message: 'Logged out successfully' });
+});
+
+// Delete account endpoint
+router.delete('/account/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Verify token
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.id !== parseInt(userId)) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    // Delete user's images first (due to foreign key constraints)
+    await pool.query('DELETE FROM images WHERE user_id = $1', [userId]);
+    
+    // Delete user's likes
+    await pool.query('DELETE FROM likes WHERE user_id = $1', [userId]);
+    
+    // Delete user's comments
+    await pool.query('DELETE FROM comments WHERE user_id = $1', [userId]);
+    
+    // Delete user's friends relationships
+    await pool.query('DELETE FROM friends WHERE user_id = $1 OR friend_id = $1', [userId]);
+    
+    // Delete user's friend requests
+    await pool.query('DELETE FROM friend_requests WHERE user_id = $1 OR requester_id = $1', [userId]);
+    
+    // Finally delete the user
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get user profile endpoint
 router.get('/profile/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Temporarily disable authentication for testing
-    // const token = req.headers.authorization?.split(' ')[1];
-    // if (!token) {
-    //   return res.status(401).json({ message: 'Access token required' });
-    // }
+    // Re-enable authentication
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
+    }
     
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // if (decoded.id !== parseInt(userId)) {
-    //   return res.status(403).json({ message: 'Unauthorized' });
-    // }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.id !== parseInt(userId)) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
 
     const user = await pool.query(
       'SELECT id, username, email, banner_image, profile_picture FROM users WHERE id = $1',
@@ -229,16 +339,16 @@ router.put('/profile/:userId', async (req, res) => {
     const { userId } = req.params;
     const { username, bannerImage, profilePicture } = req.body;
     
-    // Temporarily disable authentication for testing
-    // const token = req.headers.authorization?.split(' ')[1];
-    // if (!token) {
-    //   return res.status(401).json({ message: 'Access token required' });
-    // }
+    // Re-enable authentication
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
+    }
     
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // if (decoded.id !== parseInt(userId)) {
-    //   return res.status(403).json({ message: 'Unauthorized' });
-    // }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.id !== parseInt(userId)) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
 
     // Build update query dynamically based on provided fields
     const updateFields = [];

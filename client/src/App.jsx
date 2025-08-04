@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import { UserProvider } from './contexts/UserContext';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
 import Upload from './pages/Upload.jsx';
@@ -19,77 +20,79 @@ import DirectMessage from './pages/DirectMessage';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/explore" element={<Explore />} />
-        <Route path="/explore/art" element={<ExploreArt />} />
-        <Route path="/explore/games" element={<ExploreGames />} />
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/display/:id" element={<Display />} />
-        <Route path="/genre/:genre" element={<GenreChannel />} />
-        <Route path="/" element={<Landing />} />
+    <UserProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/explore/art" element={<ExploreArt />} />
+          <Route path="/explore/games" element={<ExploreGames />} />
+          <Route path="/landing" element={<Landing />} />
+          <Route path="/display/:id" element={<Display />} />
+          <Route path="/genre/:genre" element={<GenreChannel />} />
+          <Route path="/" element={<Landing />} />
 
-        <Route
-          path="/upload"
-          element={
-            <ProtectedRoute>
-              <Upload />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/drafts"
-          element={
-            <ProtectedRoute>
-              <Drafts />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mygames"
-          element={
-            <ProtectedRoute>
-              <MyGames />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/myart"
-          element={
-            <ProtectedRoute>
-              <MyArt />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/friends"
-          element={
-            <ProtectedRoute>
-              <Friends />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/direct-message/:friendId/:friendUsername"
-          element={
-            <ProtectedRoute>
-              <DirectMessage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<h2>Page not found</h2>} />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/upload"
+            element={
+              <ProtectedRoute>
+                <Upload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/drafts"
+            element={
+              <ProtectedRoute>
+                <Drafts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mygames"
+            element={
+              <ProtectedRoute>
+                <MyGames />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/myart"
+            element={
+              <ProtectedRoute>
+                <MyArt />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/friends"
+            element={
+              <ProtectedRoute>
+                <Friends />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/direct-message/:friendId/:friendUsername"
+            element={
+              <ProtectedRoute>
+                <DirectMessage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<h2>Page not found</h2>} />
+        </Routes>
+      </BrowserRouter>
+    </UserProvider>
   );
 }
 
