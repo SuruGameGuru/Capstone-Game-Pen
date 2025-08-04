@@ -3294,3 +3294,431 @@ this.socket.on('channel-users', (data) => {
 4. **Performance**: Optimized event listener management
 
 This fix ensures that genre chat channels maintain message persistence across navigation, providing a seamless user experience where conversations are never lost.
+
+---
+
+### **Step 7: Comprehensive Debug and Fix for Genre Message Persistence**
+
+#### **7.1 Problem Description**
+Despite previous fixes, users still cannot see their messages when leaving and rejoining genre channels. The issue requires comprehensive debugging to identify the root cause.
+
+#### **7.2 Debugging Process**
+
+**Step 7.2.1: Database Verification**
+**File**: `capstone/Capstone-Game-Pen/debug-genre-messages.js` (NEW FILE)
+
+**Create comprehensive debug script**:
+```javascript
+const axios = require('axios');
+require('dotenv').config({ path: './server/.env' });
+
+const API_URL = 'http://localhost:3001/api';
+
+async function debugGenreMessages() {
+  try {
+    console.log('🔍 DEBUGGING GENRE MESSAGE PERSISTENCE');
+    console.log('=====================================\n');
+
+    console.log('1. Testing login for user...');
+    
+    const loginResponse = await axios.post(`${API_URL}/auth/login`, {
+      email: 'test456@test.com',
+      password: 'password123'
+    });
+    
+    const token = loginResponse.data.token;
+    const user = loginResponse.data.user;
+    
+    console.log('✅ User logged in:', user.username, '(ID:', user.id, ')');
+    
+    console.log('\n2. Testing database connection and message insertion...');
+    
+    const { Pool } = require('pg');
+    
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    
+    // Test inserting a new message
+    const insertQuery = `
+      INSERT INTO chat_messages (user_id, username, message, genre, timestamp)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, user_id, username, message, genre, timestamp
+    `;
+    
+    const testMessage = `Debug test message at ${new Date().toLocaleTimeString()}`;
+    const testGenre = 'Action';
+    
+    const insertResult = await pool.query(insertQuery, [
+      user.id,
+      user.username,
+      testMessage,
+      testGenre,
+      new Date().toISOString()
+    ]);
+    
+    console.log('✅ Message inserted:', insertResult.rows[0]);
+    
+    console.log('\n3. Testing message retrieval for Action channel...');
+    
+    const selectQuery = `
+      SELECT id, user_id, username, message, genre, timestamp
+      FROM chat_messages
+      WHERE genre = $1
+      ORDER BY timestamp DESC
+      LIMIT 10
+    `;
+    
+    const selectResult = await pool.query(selectQuery, [testGenre]);
+    
+    console.log(`📝 Found ${selectResult.rows.length} messages for ${testGenre} channel:`);
+    selectResult.rows.forEach((msg, index) => {
+      console.log(`  ${index + 1}. [${msg.timestamp}] ${msg.username}: ${msg.message}`);
+    });
+    
+    console.log('\n4. Testing server-side message loading function...');
+    
+    // Test the exact query that the server uses
+    const serverQuery = `
+      SELECT id, user_id, username, message, genre, timestamp
+      FROM chat_messages
+      WHERE genre = $1
+      ORDER BY timestamp ASC
+    `;
+    
+    const serverResult = await pool.query(serverQuery, [testGenre]);
+    
+    console.log(`🔄 Server would load ${serverResult.rows.length} messages for ${testGenre}:`);
+    serverResult.rows.forEach((msg, index) => {
+      console.log(`  ${index + 1}. [${msg.timestamp}] ${msg.username}: ${msg.message}`);
+    });
+    
+    console.log('\n5. Testing all genres...');
+    
+    const genres = ['Action', 'Comedy', 'Adventure', 'Simulation'];
+    
+    for (const genre of genres) {
+      const genreResult = await pool.query(serverQuery, [genre]);
+      console.log(`📊 ${genre}: ${genreResult.rows.length} messages`);
+    }
+    
+    await pool.end();
+    
+    console.log('\n✅ Debug test completed!');
+    
+  } catch (error) {
+    console.error('❌ Error:', error.response?.data || error.message);
+  }
+}
+
+debugGenreMessages();
+```
+
+**Expected Results**:
+```
+✅ User logged in: testuser456_updated (ID: 4)
+✅ Message inserted: { id: 37, user_id: '4', username: 'testuser456_updated', ... }
+📝 Found 3 messages for Action channel
+🔄 Server would load 3 messages for Action
+📊 Action: 3 messages
+📊 Comedy: 2 messages
+📊 Adventure: 4 messages
+📊 Simulation: 3 messages
+```
+
+**Step 7.2.2: Server-Side Function Verification**
+**File**: `capstone/Capstone-Game-Pen/test-server-loading.js` (NEW FILE)
+
+**Create server-side loading test**:
+```javascript
+const { Pool } = require('pg');
+require('dotenv').config({ path: './server/.env' });
+
+async function testServerLoading() {
+  try {
+    console.log('🔍 TESTING SERVER-SIDE MESSAGE LOADING');
+    console.log('=====================================\n');
+
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+
+    // Test the exact function that the server uses
+    async function loadGenreMessages(genre) {
+      try {
+        const query = `
+          SELECT id, user_id, username, message, genre, timestamp
+          FROM chat_messages
+          WHERE genre = $1
+          ORDER BY timestamp ASC
+        `;
+        const result = await pool.query(query, [genre]);
+        return result.rows;
+      } catch (error) {
+        console.error('Error loading genre messages from database:', error);
+        throw error;
+      }
+    }
+
+    console.log('1. Testing loadGenreMessages function for Action channel...');
+    
+    const actionMessages = await loadGenreMessages('Action');
+    console.log(`✅ Loaded ${actionMessages.length} messages for Action channel:`);
+    actionMessages.forEach((msg, index) => {
+      console.log(`  ${index + 1}. [${msg.timestamp}] ${msg.username}: ${msg.message}`);
+    });
+
+    console.log('\n2. Testing loadGenreMessages function for all genres...');
+    
+    const genres = ['Action', 'Comedy', 'Adventure', 'Simulation'];
+    
+    for (const genre of genres) {
+      const messages = await loadGenreMessages(genre);
+      console.log(`📊 ${genre}: ${messages.length} messages loaded`);
+      if (messages.length > 0) {
+        console.log(`  Latest: ${messages[messages.length - 1].message.substring(0, 50)}...`);
+      }
+    }
+
+    await pool.end();
+    
+    console.log('\n✅ Server-side loading test completed!');
+    
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+  }
+}
+
+testServerLoading();
+```
+
+**Expected Results**:
+```
+✅ Loaded 3 messages for Action channel
+📊 Action: 3 messages loaded
+📊 Comedy: 2 messages loaded
+📊 Adventure: 4 messages loaded
+📊 Simulation: 3 messages loaded
+```
+
+#### **7.3 Frontend Debug Implementation**
+
+**Step 7.3.1: Add Debug Logging to GenreChannel Component**
+**File**: `client/src/components/GenreChannel.jsx` (Lines 40-50 for callbacks, Lines 75-95 for useEffect)
+
+**Add debug logging to message loading callbacks**:
+```javascript
+const handleGenreMessagesLoaded = useCallback((data) => {
+  console.log('🎯 GenreChannel: Received loaded messages for', data.genre, ':', data.messages);
+  if (data.genre === genre) {
+    console.log('✅ GenreChannel: Setting messages for', genre, ':', data.messages.length, 'messages');
+    setMessages(data.messages);
+  } else {
+    console.log('❌ GenreChannel: Genre mismatch. Expected:', genre, 'Received:', data.genre);
+  }
+}, [genre]);
+
+const handleGenreMessagesError = useCallback((data) => {
+  console.log('❌ GenreChannel: Error loading messages for', data.genre, ':', data.message);
+  if (data.genre === genre) {
+    console.error('Failed to load genre messages:', data.message);
+  }
+}, [genre]);
+```
+
+**Add debug logging to useEffect**:
+```javascript
+useEffect(() => {
+  console.log('🔄 GenreChannel: useEffect triggered for genre:', genre);
+  
+  // Connect to chat service
+  chatService.connect({ username, userId });
+
+  // Join the genre channel
+  console.log('🔄 GenreChannel: Joining channel:', genre);
+  chatService.joinGenreChannel(genre, username);
+
+  // Register message callbacks
+  console.log('🔄 GenreChannel: Registering callbacks for genre:', genre);
+  chatService.onMessage('genre', handleGenreMessage);
+  chatService.onMessage('user-joined', handleUserJoined);
+  chatService.onMessage('user-left', handleUserLeft);
+  chatService.onMessage('channel-users', handleChannelUsers);
+  chatService.onMessage('genre-messages-loaded', handleGenreMessagesLoaded);
+  chatService.onMessage('genre-messages-error', handleGenreMessagesError);
+
+  // Listen for typing indicators
+  chatService.listenForTyping(handleTypingIndicator);
+
+  // Cleanup on unmount
+  return () => {
+    console.log('🔄 GenreChannel: Cleanup for genre:', genre);
+    chatService.leaveGenreChannel(genre);
+    chatService.offMessage('genre');
+    chatService.offMessage('user-joined');
+    chatService.offMessage('user-left');
+    chatService.offMessage('channel-users');
+    chatService.offMessage('genre-messages-loaded');
+    chatService.offMessage('genre-messages-error');
+  };
+}, [genre, username, userId, handleGenreMessage, handleUserJoined, handleUserLeft, handleChannelUsers, handleGenreMessagesLoaded, handleGenreMessagesError, handleTypingIndicator]);
+```
+
+**Step 7.3.2: Add Debug Logging to ChatService**
+**File**: `client/src/services/chatService.js` (Lines 30-40 for connect, Lines 220-230 for notifyMessageCallbacks)
+
+**Add debug logging to global listeners**:
+```javascript
+// Register global message loading listeners
+this.socket.on('genre-messages-loaded', (data) => {
+  console.log('🎯 ChatService: Received genre-messages-loaded event:', data);
+  this.notifyMessageCallbacks('genre-messages-loaded', data);
+});
+
+this.socket.on('genre-messages-error', (data) => {
+  console.log('❌ ChatService: Received genre-messages-error event:', data);
+  this.notifyMessageCallbacks('genre-messages-error', data);
+});
+```
+
+**Add debug logging to callback notification**:
+```javascript
+// Notify message callbacks
+notifyMessageCallbacks(type, data) {
+  console.log('🎯 ChatService: Notifying callbacks for type:', type, 'data:', data);
+  if (this.messageCallbacks.has(type)) {
+    const callbacks = this.messageCallbacks.get(type);
+    console.log('🎯 ChatService: Found', callbacks.length, 'callbacks for type:', type);
+    callbacks.forEach((callback, index) => {
+      console.log('🎯 ChatService: Executing callback', index + 1, 'for type:', type);
+      callback(data);
+    });
+  } else {
+    console.log('❌ ChatService: No callbacks found for type:', type);
+  }
+}
+```
+
+**Step 7.3.3: Add Debug Logging to Server**
+**File**: `capstone/Capstone-Game-Pen/server/index.js` (Lines 60-80 for join-genre-channel, Lines 300-320 for loadGenreMessages)
+
+**Add debug logging to message loading**:
+```javascript
+// Load existing messages for the genre channel
+try {
+  console.log(`🔄 Server: Loading messages for genre: ${genre}`);
+  const messages = await loadGenreMessages(genre);
+  console.log(`✅ Server: Loaded ${messages.length} messages for genre: ${genre}`);
+  socket.emit('genre-messages-loaded', {
+    genre: genre,
+    messages: messages
+  });
+  console.log(`📤 Server: Sent genre-messages-loaded event for genre: ${genre}`);
+} catch (error) {
+  console.error('❌ Server: Error loading genre messages:', error);
+  socket.emit('genre-messages-error', { 
+    genre: genre,
+    message: 'Failed to load messages' 
+  });
+}
+```
+
+**Add debug logging to loadGenreMessages function**:
+```javascript
+// Helper function to load genre messages from database
+async function loadGenreMessages(genre) {
+  try {
+    console.log(`🔄 Server: loadGenreMessages called for genre: ${genre}`);
+    const pool = require('./db');
+    const query = `
+      SELECT id, user_id, username, message, genre, timestamp
+      FROM chat_messages
+      WHERE genre = $1
+      ORDER BY timestamp ASC
+    `;
+    const result = await pool.query(query, [genre]);
+    console.log(`✅ Server: loadGenreMessages found ${result.rows.length} messages for genre: ${genre}`);
+    return result.rows;
+  } catch (error) {
+    console.error('❌ Server: Error loading genre messages from database:', error);
+    throw error;
+  }
+}
+```
+
+#### **7.4 Testing and Verification**
+
+**Step 7.4.1: Manual Testing Steps**
+1. **Start the server** with debug logging enabled
+2. **Open browser console** to see debug messages
+3. **Navigate to a genre channel** (Action, Comedy, Adventure, Simulation)
+4. **Send a message** in the channel
+5. **Check browser console** for debug messages
+6. **Navigate back** to landing page
+7. **Go back** to the same genre channel
+8. **Check browser console** for message loading debug messages
+9. **Verify** if messages are displayed
+
+**Step 7.4.2: Expected Debug Output**
+When joining a channel, you should see:
+```
+🔄 GenreChannel: useEffect triggered for genre: Action
+🔄 GenreChannel: Joining channel: Action
+🔄 GenreChannel: Registering callbacks for genre: Action
+🔄 Server: Loading messages for genre: Action
+✅ Server: Loaded 3 messages for genre: Action
+📤 Server: Sent genre-messages-loaded event for genre: Action
+🎯 ChatService: Received genre-messages-loaded event: {genre: "Action", messages: [...]}
+🎯 ChatService: Notifying callbacks for type: genre-messages-loaded
+🎯 ChatService: Found 1 callbacks for type: genre-messages-loaded
+🎯 ChatService: Executing callback 1 for type: genre-messages-loaded
+🎯 GenreChannel: Received loaded messages for Action: [...]
+✅ GenreChannel: Setting messages for Action: 3 messages
+```
+
+#### **7.5 Troubleshooting Guide**
+
+**If messages are not loading, check:**
+
+1. **Database Connection**: Verify database is accessible and messages exist
+2. **Server Logs**: Check if `loadGenreMessages` is being called
+3. **Socket Events**: Verify `genre-messages-loaded` events are being sent
+4. **Frontend Callbacks**: Check if callbacks are registered and executed
+5. **Component State**: Verify `setMessages` is being called with correct data
+6. **Browser Console**: Look for any JavaScript errors
+
+**Common Issues and Solutions:**
+
+1. **No server debug logs**: Server not running or debug logging not enabled
+2. **No frontend debug logs**: Component not mounting or callbacks not registered
+3. **Messages not in database**: Check if messages are being saved properly
+4. **Socket connection issues**: Verify Socket.IO connection is established
+5. **Callback registration issues**: Check if `onMessage` is being called correctly
+
+#### **7.6 Summary of Debug Implementation**
+
+#### ✅ **What Was Added:**
+- Comprehensive database verification scripts
+- Server-side function testing
+- Frontend debug logging throughout the message flow
+- Server-side debug logging for message loading
+- Detailed troubleshooting guide
+
+#### 🔧 **Files Modified:**
+- `capstone/Capstone-Game-Pen/debug-genre-messages.js` (NEW FILE)
+- `capstone/Capstone-Game-Pen/test-server-loading.js` (NEW FILE)
+- `client/src/components/GenreChannel.jsx` (Lines 40-95)
+- `client/src/services/chatService.js` (Lines 30-40, 220-230)
+- `capstone/Capstone-Game-Pen/server/index.js` (Lines 60-80, 300-320)
+
+#### 📋 **Debug Checklist:**
+- [ ] Database messages exist and are accessible
+- [ ] Server-side loading function works correctly
+- [ ] Socket events are being sent from server
+- [ ] Frontend callbacks are registered properly
+- [ ] Message state is being updated correctly
+- [ ] No JavaScript errors in browser console
+
+This comprehensive debugging implementation will help identify exactly where the message persistence issue occurs and provide the necessary fixes.

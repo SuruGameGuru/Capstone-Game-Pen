@@ -76,13 +76,16 @@ io.on('connection', (socket) => {
     
     // Load existing messages for the genre channel
     try {
+      console.log(`🔄 Server: Loading messages for genre: ${genre}`);
       const messages = await loadGenreMessages(genre);
+      console.log(`✅ Server: Loaded ${messages.length} messages for genre: ${genre}`);
       socket.emit('genre-messages-loaded', {
         genre: genre,
         messages: messages
       });
+      console.log(`📤 Server: Sent genre-messages-loaded event for genre: ${genre}`);
     } catch (error) {
-      console.error('Error loading genre messages:', error);
+      console.error('❌ Server: Error loading genre messages:', error);
       socket.emit('genre-messages-error', { 
         genre: genre,
         message: 'Failed to load messages' 
@@ -321,6 +324,7 @@ async function loadDirectMessages(fromUserId, toUserId) {
 // Helper function to load genre messages from database
 async function loadGenreMessages(genre) {
   try {
+    console.log(`🔄 Server: loadGenreMessages called for genre: ${genre}`);
     const pool = require('./db');
     const query = `
       SELECT id, user_id, username, message, genre, timestamp
@@ -329,9 +333,10 @@ async function loadGenreMessages(genre) {
       ORDER BY timestamp ASC
     `;
     const result = await pool.query(query, [genre]);
+    console.log(`✅ Server: loadGenreMessages found ${result.rows.length} messages for genre: ${genre}`);
     return result.rows;
   } catch (error) {
-    console.error('Error loading genre messages from database:', error);
+    console.error('❌ Server: Error loading genre messages from database:', error);
     throw error;
   }
 }
