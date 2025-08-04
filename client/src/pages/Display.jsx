@@ -12,6 +12,7 @@ const Display = () => {
   const [image, setImage] = useState(null);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [dislikeCount, setDislikeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
@@ -29,6 +30,13 @@ const Display = () => {
         if (imageData) {
           setImage(imageData);
           setLikeCount(imageData.like_count || 0);
+          setDislikeCount(imageData.dislike_count || 0);
+          
+          // Check if current user has liked this image
+          if (user) {
+            const hasLiked = await imageService.checkIfLiked(id);
+            setLiked(hasLiked);
+          }
         } else {
           setError('Image not found');
         }
@@ -51,7 +59,7 @@ const Display = () => {
 
     fetchImage();
     fetchComments();
-  }, [id]);
+  }, [id, user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -68,22 +76,44 @@ const Display = () => {
   }, []);
 
   const handleLike = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
     try {
       await imageService.likeImage(id);
       setLiked(true);
       setLikeCount(prev => prev + 1);
     } catch (error) {
       console.error('Error liking image:', error);
+      if (error.message.includes('401')) {
+        alert('Please log in to like images');
+        navigate('/login');
+      } else {
+        alert('Failed to like image. Please try again.');
+      }
     }
   };
 
   const handleDislike = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
     try {
       await imageService.unlikeImage(id);
       setLiked(false);
       setLikeCount(prev => prev - 1);
     } catch (error) {
       console.error('Error unliking image:', error);
+      if (error.message.includes('401')) {
+        alert('Please log in to unlike images');
+        navigate('/login');
+      } else {
+        alert('Failed to unlike image. Please try again.');
+      }
     }
   };
 
@@ -405,12 +435,6 @@ const Display = () => {
                   className={`display-like-btn ${liked ? 'liked' : ''}`}
                 >
                   {liked ? '💔 Unlike' : '❤️ Like'} ({likeCount})
-                </button>
-                <button 
-                  onClick={handleDislike} 
-                  className="display-dislike-btn"
-                >
-                  👎 Dislike
                 </button>
               </div>
               <div className="display-action-column">

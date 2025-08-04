@@ -78,6 +78,75 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Check if user has liked an image - WITH AUTHENTICATION (must come before /:id)
+router.get('/:id/check-like', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id; // Use authenticated user ID
+    
+    const result = await pool.query(
+      'SELECT * FROM likes WHERE user_id = $1 AND image_id = $2',
+      [userId, id]
+    );
+    
+    res.json({ liked: result.rows.length > 0 });
+  } catch (error) {
+    console.error('Check like error:', error);
+    res.status(500).json({ message: 'Error checking like status' });
+  }
+});
+
+// Like image - WITH AUTHENTICATION (must come before /:id)
+router.post('/:id/like', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id; // Use authenticated user ID
+    
+    // Check if already liked
+    const existingLike = await pool.query(
+      'SELECT * FROM likes WHERE user_id = $1 AND image_id = $2',
+      [userId, id]
+    );
+    
+    if (existingLike.rows.length > 0) {
+      return res.status(400).json({ message: 'Already liked this image' });
+    }
+    
+    // Add like
+    await pool.query(
+      'INSERT INTO likes (user_id, image_id) VALUES ($1, $2)',
+      [userId, id]
+    );
+    
+    res.json({ message: 'Image liked successfully' });
+  } catch (error) {
+    console.error('Like error:', error);
+    res.status(500).json({ message: 'Error liking image' });
+  }
+});
+
+// Unlike image - WITH AUTHENTICATION (must come before /:id)
+router.post('/:id/unlike', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id; // Use authenticated user ID
+    
+    const result = await pool.query(
+      'DELETE FROM likes WHERE user_id = $1 AND image_id = $2',
+      [userId, id]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(400).json({ message: 'Like not found' });
+    }
+    
+    res.json({ message: 'Image unliked successfully' });
+  } catch (error) {
+    console.error('Unlike error:', error);
+    res.status(500).json({ message: 'Error unliking image' });
+  }
+});
+
 // Get single image by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -137,57 +206,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Update image error:', error);
     res.status(500).json({ message: 'Error updating image' });
-  }
-});
-
-// Like image - WITH AUTHENTICATION
-router.post('/:id/like', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user.id; // Use authenticated user ID
-    
-    // Check if already liked
-    const existingLike = await pool.query(
-      'SELECT * FROM likes WHERE user_id = $1 AND image_id = $2',
-      [userId, id]
-    );
-    
-    if (existingLike.rows.length > 0) {
-      return res.status(400).json({ message: 'Already liked this image' });
-    }
-    
-    // Add like
-    await pool.query(
-      'INSERT INTO likes (user_id, image_id) VALUES ($1, $2)',
-      [userId, id]
-    );
-    
-    res.json({ message: 'Image liked successfully' });
-  } catch (error) {
-    console.error('Like error:', error);
-    res.status(500).json({ message: 'Error liking image' });
-  }
-});
-
-// Unlike image - WITH AUTHENTICATION
-router.post('/:id/unlike', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user.id; // Use authenticated user ID
-    
-    const result = await pool.query(
-      'DELETE FROM likes WHERE user_id = $1 AND image_id = $2',
-      [userId, id]
-    );
-    
-    if (result.rowCount === 0) {
-      return res.status(400).json({ message: 'Like not found' });
-    }
-    
-    res.json({ message: 'Image unliked successfully' });
-  } catch (error) {
-    console.error('Unlike error:', error);
-    res.status(500).json({ message: 'Error unliking image' });
   }
 });
 
