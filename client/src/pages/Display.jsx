@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
 import { commentService } from '../services/commentService';
 import '../styles/Display.css';
@@ -7,6 +8,7 @@ import '../styles/Display.css';
 const Display = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [image, setImage] = useState(null);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -18,12 +20,6 @@ const Display = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef(null);
-
-  // Mock user data (replace with real auth when implemented)
-  const currentUser = {
-    id: 1,
-    username: 'TestUser'
-  };
 
   useEffect(() => {
     const fetchImage = async () => {
@@ -92,8 +88,23 @@ const Display = () => {
   };
 
   const handleMessage = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    // Don't allow messaging yourself
+    if (image && image.user_id === user.id) {
+      alert('You cannot message yourself!');
+      return;
+    }
+    
     // Navigate to direct message with the image author
-    navigate(`/direct-message/${image.user_id}/${image.username}`);
+    if (image && image.user_id && image.username) {
+      navigate(`/direct-message/${image.user_id}/${image.username}`);
+    } else {
+      alert('Unable to start conversation. User information not available.');
+    }
   };
 
   const handleBack = () => {
@@ -108,8 +119,8 @@ const Display = () => {
       setIsSubmittingComment(true);
       const comment = await commentService.addComment(
         id,
-        currentUser.id,
-        currentUser.username,
+        user.id,
+        user.username,
         newComment.trim()
       );
       setComments(prev => [comment, ...prev]);
@@ -124,7 +135,7 @@ const Display = () => {
 
   const handleDeleteComment = async (commentId) => {
     try {
-      await commentService.deleteComment(commentId, currentUser.id);
+      await commentService.deleteComment(commentId, user.id);
       setComments(prev => prev.filter(comment => comment.id !== commentId));
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -147,7 +158,9 @@ const Display = () => {
 
   const handleLogout = () => {
     setShowProfileDropdown(false);
-    navigate('/login');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
 
   const handleUploadClick = () => {
@@ -202,7 +215,7 @@ const Display = () => {
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
                   <div className="display-dropdown-username">
-                    {currentUser.username}
+                    {user?.username || 'User'}
                   </div>
                   <button 
                     onClick={() => handleDropdownItemClick('/profile')}
@@ -269,7 +282,7 @@ const Display = () => {
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
                   <div className="display-dropdown-username">
-                    {currentUser.username}
+                    {user?.username || 'User'}
                   </div>
                   <button 
                     onClick={() => handleDropdownItemClick('/profile')}
@@ -340,7 +353,7 @@ const Display = () => {
             {showProfileDropdown && (
               <div className="display-dropdown-menu">
                 <div className="display-dropdown-username">
-                  {currentUser.username}
+                  {user?.username || 'User'}
                 </div>
                 <button 
                   onClick={() => handleDropdownItemClick('/profile')}
@@ -445,7 +458,7 @@ const Display = () => {
                   <div className="comment-header">
                     <span className="comment-author">{comment.username}</span>
                     <span className="comment-date">{formatDate(comment.created_at)}</span>
-                    {comment.user_id === currentUser.id && (
+                    {comment.user_id === user.id && (
                       <button
                         onClick={() => handleDeleteComment(comment.id)}
                         className="comment-delete-btn"

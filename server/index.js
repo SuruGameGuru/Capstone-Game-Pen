@@ -125,8 +125,8 @@ io.on('connection', (socket) => {
   socket.on('send-direct-message', (data) => {
     const messageData = {
       id: Date.now(),
-      fromUserId: socket.id,
-      fromUsername: data.fromUsername || 'Anonymous',
+      fromUserId: socket.userId || socket.id,
+      fromUsername: socket.username || data.fromUsername || 'Anonymous',
       toUserId: data.toUserId,
       message: data.message,
       timestamp: new Date().toISOString()
@@ -137,8 +137,20 @@ io.on('connection', (socket) => {
     // Send back to sender for confirmation
     socket.emit('direct-message-sent', messageData);
     
-    // Save message to database (optional)
+    // Save message to database
     saveDirectMessageToDatabase(messageData);
+  });
+
+  // Load direct messages
+  socket.on('load-direct-messages', async (data) => {
+    try {
+      const { fromUserId, toUserId } = data;
+      const messages = await loadDirectMessages(fromUserId, toUserId);
+      socket.emit('direct-messages-loaded', messages);
+    } catch (error) {
+      console.error('Error loading direct messages:', error);
+      socket.emit('direct-messages-error', { message: 'Failed to load messages' });
+    }
   });
 
   // Typing indicators
@@ -243,7 +255,65 @@ async function saveDirectMessageToDatabase(messageData) {
   }
 }
 
+// Helper function to delete old messages (older than 72 hours)
+async function deleteOldMessages() {
+  try {
+    const pool = require('./db');
+    const query = `
+      DELETE FROM direct_messages 
+      WHERE timestamp < NOW() - INTERVAL '72 hours'
+    `;
+    const result = await pool.query(query);
+    console.log(`Deleted ${result.rowCount} old direct messages`);
+  } catch (error) {
+    console.error('Error deleting old messages:', error);
+  }
+}
+
+// Helper function to delete old chat messages (older than 72 hours)
+async function deleteOldChatMessages() {
+  try {
+    const pool = require('./db');
+    const query = `
+      DELETE FROM chat_messages 
+      WHERE timestamp < NOW() - INTERVAL '72 hours'
+    `;
+    const result = await pool.query(query);
+    console.log(`Deleted ${result.rowCount} old chat messages`);
+  } catch (error) {
+    console.error('Error deleting old chat messages:', error);
+  }
+}
+
+// Helper function to load direct messages from database
+async function loadDirectMessages(fromUserId, toUserId) {
+  try {
+    const pool = require('./db');
+    const query = `
+      SELECT id, from_user_id, from_username, to_user_id, message, timestamp
+      FROM direct_messages
+      WHERE (from_user_id = $1 AND to_user_id = $2) OR (from_user_id = $2 AND to_user_id = $1)
+      ORDER BY timestamp ASC
+    `;
+    const result = await pool.query(query, [fromUserId, toUserId]);
+    return result.rows;
+  } catch (error) {
+    console.error('Error loading direct messages from database:', error);
+    throw error;
+  }
+}
+
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  
+  // Schedule auto-deletion of old messages (every hour)
+  setInterval(() => {
+    deleteOldMessages();
+    deleteOldChatMessages();
+  }, 60 * 60 * 1000); // Run every hour
+  
+  // Run initial cleanup
+  deleteOldMessages();
+  deleteOldChatMessages();
 });
