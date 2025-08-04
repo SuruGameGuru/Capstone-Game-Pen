@@ -30,7 +30,20 @@ const DirectMessage = () => {
     
     // Listen for new direct messages
     chatService.listenForDirectMessages((message) => {
-      setMessages(prev => [...prev, message]);
+      // Prevent duplicates by checking if message already exists
+      setMessages(prev => {
+        const messageExists = prev.some(existingMsg => 
+          existingMsg.id === message.id || 
+          (existingMsg.fromUserId === message.fromUserId && 
+           existingMsg.message === message.message && 
+           Math.abs(new Date(existingMsg.timestamp) - new Date(message.timestamp)) < 1000)
+        );
+        
+        if (messageExists) {
+          return prev; // Don't add duplicate
+        }
+        return [...prev, message];
+      });
     });
     
     setIsLoading(false);
@@ -86,26 +99,16 @@ const DirectMessage = () => {
     e.preventDefault();
     if (!newMessage.trim() || !user) return;
 
-    const messageData = {
-      id: Date.now(),
-      fromUserId: user.id,
-      fromUsername: user.username,
-      toUserId: friendId,
-      message: newMessage.trim(),
-      timestamp: new Date().toISOString()
-    };
-
-    // Add message to local state immediately for better UX
-    setMessages(prev => [...prev, messageData]);
+    const messageText = newMessage.trim();
     setNewMessage('');
 
-    // Send via chat service
+    // Send via chat service - let the server handle message delivery
     try {
-      chatService.sendDirectMessage(friendId, newMessage.trim(), user.username);
+      chatService.sendDirectMessage(friendId, messageText, user.username);
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove the message from local state if sending failed
-      setMessages(prev => prev.filter(msg => msg.id !== messageData.id));
+      // If sending failed, restore the message to input
+      setNewMessage(messageText);
     }
   };
 

@@ -150,10 +150,9 @@ io.on('connection', (socket) => {
       timestamp: new Date().toISOString()
     };
     
-    // Send to recipient
+    // Send to both sender and recipient for real-time display
+    socket.emit('direct-message', messageData);
     io.to(data.toUserId).emit('direct-message', messageData);
-    // Send back to sender for confirmation
-    socket.emit('direct-message-sent', messageData);
     
     // Save message to database
     saveDirectMessageToDatabase(messageData);

@@ -163,8 +163,9 @@ class ChatService {
   listenForDirectMessages(callback) {
     if (!this.socket) return;
     
+    // Only listen for direct-message event, not direct-message-sent
+    // direct-message-sent is just a confirmation and shouldn't add to messages
     this.socket.on('direct-message', callback);
-    this.socket.on('direct-message-sent', callback);
   }
 
   // Typing indicators
