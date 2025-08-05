@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: gamepen-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    rootDir: server
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://gamepen_db_user:v9pZ79pQHXSc1A53mpkkKfaUQ9KKN0Br@dpg-d20h6g6mcj7s73b65fmg-a.ohio-postgres.render.com/gamepen_db
+      - key: JWT_SECRET
+        value: bccee2a083f1fc4459d70aac01e611daba75f3ef25c06180721ba6d876f072a8
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dqxoutwou
+      - key: CLOUDINARY_API_KEY
+        value: 139997416795352
+      - key: CLOUDINARY_API_SECRET
+        value: eJnOTu7bmsvomCyjxKYDKCqf350
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: gamepen-frontend
+    env: static
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./build
+    rootDir: client
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://gamepen-backend.onrender.com 
