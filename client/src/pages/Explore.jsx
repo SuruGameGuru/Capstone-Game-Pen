@@ -229,12 +229,12 @@ const Explore = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="explore-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <div className="explore-dropdown-divider"></div>
                 <button 
                   onClick={handleLogout}

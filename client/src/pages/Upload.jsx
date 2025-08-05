@@ -92,12 +92,12 @@ const Upload = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="upload-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <div className="upload-dropdown-divider"></div>
                 <button 
                   onClick={handleLogout}

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import chatService from '../services/chatService';
 import '../styles/DirectMessage.css';
 
 const DirectMessage = () => {
   const { friendId, friendUsername } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -14,19 +16,66 @@ const DirectMessage = () => {
   const dropdownRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Mock user data (replace with real auth when implemented)
-  const currentUser = {
-    id: 1,
-    username: 'TestUser'
-  };
-
   useEffect(() => {
-    // Connect to chat service
-    chatService.connect({ username: currentUser.username, userId: currentUser.id });
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    // Connect to chat service with real user data
+    chatService.connect({ username: user.username, userId: user.id });
     
-    // Load existing messages (this would come from the database in a real app)
+    // Load existing messages from database
+    loadMessages();
+    
+    // Listen for new direct messages
+    chatService.listenForDirectMessages((message) => {
+      // Prevent duplicates by checking if message already exists
+      setMessages(prev => {
+        const messageExists = prev.some(existingMsg => 
+          existingMsg.id === message.id || 
+          (existingMsg.fromUserId === message.fromUserId && 
+           existingMsg.message === message.message && 
+           Math.abs(new Date(existingMsg.timestamp) - new Date(message.timestamp)) < 1000)
+        );
+        
+        if (messageExists) {
+          return prev; // Don't add duplicate
+        }
+        return [...prev, message];
+      });
+    });
+    
     setIsLoading(false);
-  }, [friendId]);
+    
+    return () => {
+      chatService.offMessage('direct-message');
+    };
+  }, [user, friendId, navigate]);
+
+  const loadMessages = async () => {
+    try {
+      // Request messages from server
+      chatService.socket.emit('load-direct-messages', {
+        fromUserId: user.id,
+        toUserId: friendId
+      });
+      
+      // Listen for loaded messages
+      chatService.socket.once('direct-messages-loaded', (loadedMessages) => {
+        setMessages(loadedMessages);
+        setIsLoading(false);
+      });
+      
+      chatService.socket.once('direct-messages-error', (error) => {
+        console.error('Failed to load messages:', error);
+        setIsLoading(false);
+      });
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      setIsLoading(false);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -48,25 +97,18 @@ const DirectMessage = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !user) return;
 
-    const messageData = {
-      id: Date.now(),
-      fromUserId: currentUser.id,
-      fromUsername: currentUser.username,
-      toUserId: friendId,
-      message: newMessage.trim(),
-      timestamp: new Date().toISOString()
-    };
-
-    setMessages(prev => [...prev, messageData]);
+    const messageText = newMessage.trim();
     setNewMessage('');
 
-    // Send via chat service
+    // Send via chat service - let the server handle message delivery
     try {
-      chatService.sendDirectMessage(friendId, newMessage.trim(), currentUser.username);
+      chatService.sendDirectMessage(friendId, messageText, user.username);
     } catch (error) {
       console.error('Error sending message:', error);
+      // If sending failed, restore the message to input
+      setNewMessage(messageText);
     }
   };
 
@@ -85,7 +127,10 @@ const DirectMessage = () => {
 
   const handleLogout = () => {
     setShowProfileDropdown(false);
-    navigate('/login');
+    // Use authService for proper logout
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
 
   const handleUploadClick = () => {
@@ -96,9 +141,9 @@ const DirectMessage = () => {
     navigate('/explore');
   };
 
-  const handleDraftsClick = () => {
-    navigate('/drafts');
-  };
+  // const handleDraftsClick = () => {
+  //   navigate('/drafts');
+  // };
 
   const handleFriendsClick = () => {
     navigate('/friends');
@@ -132,7 +177,7 @@ const DirectMessage = () => {
           <div className="direct-message-icons">
             <div className="direct-message-icon upload" title="Upload" onClick={handleUploadClick}></div>
             <div className="direct-message-icon file" title="Explore" onClick={handleExploreClick}></div>
-            <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+            {/* <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="direct-message-icon bell" title="Notifications"></div>
             <div className="direct-message-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="direct-message-profile-btn">
@@ -141,7 +186,7 @@ const DirectMessage = () => {
               {showProfileDropdown && (
                 <div className="direct-message-dropdown-menu">
                   <div className="direct-message-dropdown-username">
-                    {currentUser.username}
+                    {user?.username || 'User'}
                   </div>
                   <button 
                     onClick={() => handleDropdownItemClick('/profile')}
@@ -155,12 +200,12 @@ const DirectMessage = () => {
                   >
                     Upload Content
                   </button>
-                  <button 
+                  {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="direct-message-dropdown-item"
                   >
                     My Drafts
-                  </button>
+                  </button> */}
                   <button 
                     onClick={() => handleDropdownItemClick('/friends')}
                     className="direct-message-dropdown-item"
@@ -205,7 +250,7 @@ const DirectMessage = () => {
         <div className="direct-message-icons">
           <div className="direct-message-icon upload" title="Upload" onClick={handleUploadClick}></div>
           <div className="direct-message-icon file" title="Explore" onClick={handleExploreClick}></div>
-          <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+          {/* <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="direct-message-icon bell" title="Notifications"></div>
           <div className="direct-message-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="direct-message-profile-btn">
@@ -214,7 +259,7 @@ const DirectMessage = () => {
             {showProfileDropdown && (
               <div className="direct-message-dropdown-menu">
                 <div className="direct-message-dropdown-username">
-                  {currentUser.username}
+                  {user?.username || 'User'}
                 </div>
                 <button 
                   onClick={() => handleDropdownItemClick('/profile')}
@@ -228,12 +273,12 @@ const DirectMessage = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="direct-message-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <button 
                   onClick={() => handleDropdownItemClick('/friends')}
                   className="direct-message-dropdown-item"
@@ -280,7 +325,7 @@ const DirectMessage = () => {
             messages.map((message) => (
               <div 
                 key={message.id} 
-                className={`message ${message.fromUserId === currentUser.id ? 'sent' : 'received'}`}
+                className={`message ${message.fromUserId === user.id ? 'sent' : 'received'}`}
               >
                 <div className="message-content">
                   <p>{message.message}</p>

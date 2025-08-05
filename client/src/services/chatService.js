@@ -31,6 +31,17 @@ class ChatService {
       this.isConnected = false;
     });
 
+    // Register global message loading listeners
+    this.socket.on('genre-messages-loaded', (data) => {
+      console.log('🎯 ChatService: Received genre-messages-loaded event:', data);
+      this.notifyMessageCallbacks('genre-messages-loaded', data);
+    });
+
+    this.socket.on('genre-messages-error', (data) => {
+      console.log('❌ ChatService: Received genre-messages-error event:', data);
+      this.notifyMessageCallbacks('genre-messages-error', data);
+    });
+
     return this.socket;
   }
 
@@ -83,6 +94,19 @@ class ChatService {
         }
       });
 
+      // Message loading listeners are now global (registered in connect method)
+      // this.socket.on('genre-messages-loaded', (data) => {
+      //   if (data.genre === genre) {
+      //     this.notifyMessageCallbacks('genre-messages-loaded', data);
+      //   }
+      // });
+
+      // this.socket.on('genre-messages-error', (data) => {
+      //   if (data.genre === genre) {
+      //     this.notifyMessageCallbacks('genre-messages-error', data);
+      //   }
+      // });
+
       this.registeredListeners.add(channelKey);
     }
   }
@@ -100,6 +124,9 @@ class ChatService {
       this.socket.off('user-joined');
       this.socket.off('user-left');
       this.socket.off('channel-users');
+      // Don't remove message loading listeners as they're needed when rejoining
+      // this.socket.off('genre-messages-loaded');
+      // this.socket.off('genre-messages-error');
       this.registeredListeners.delete(channelKey);
     }
   }
@@ -136,8 +163,9 @@ class ChatService {
   listenForDirectMessages(callback) {
     if (!this.socket) return;
     
+    // Only listen for direct-message event, not direct-message-sent
+    // direct-message-sent is just a confirmation and shouldn't add to messages
     this.socket.on('direct-message', callback);
-    this.socket.on('direct-message-sent', callback);
   }
 
   // Typing indicators
@@ -194,10 +222,16 @@ class ChatService {
 
   // Notify message callbacks
   notifyMessageCallbacks(type, data) {
+    console.log('🎯 ChatService: Notifying callbacks for type:', type, 'data:', data);
     if (this.messageCallbacks.has(type)) {
-      this.messageCallbacks.get(type).forEach(callback => {
+      const callbacks = this.messageCallbacks.get(type);
+      console.log('🎯 ChatService: Found', callbacks.length, 'callbacks for type:', type);
+      callbacks.forEach((callback, index) => {
+        console.log('🎯 ChatService: Executing callback', index + 1, 'for type:', type);
         callback(data);
       });
+    } else {
+      console.log('❌ ChatService: No callbacks found for type:', type);
     }
   }
 

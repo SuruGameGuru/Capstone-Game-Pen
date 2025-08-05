@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
 import { commentService } from '../services/commentService';
 import '../styles/Display.css';
@@ -7,9 +8,12 @@ import '../styles/Display.css';
 const Display = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [image, setImage] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [dislikeCount, setDislikeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
@@ -19,12 +23,6 @@ const Display = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef(null);
 
-  // Mock user data (replace with real auth when implemented)
-  const currentUser = {
-    id: 1,
-    username: 'TestUser'
-  };
-
   useEffect(() => {
     const fetchImage = async () => {
       try {
@@ -33,6 +31,17 @@ const Display = () => {
         if (imageData) {
           setImage(imageData);
           setLikeCount(imageData.like_count || 0);
+          setDislikeCount(imageData.dislike_count || 0);
+          
+          // Check if current user has liked or disliked this image
+          if (user) {
+            const [hasLiked, hasDisliked] = await Promise.all([
+              imageService.checkIfLiked(id),
+              imageService.checkIfDisliked(id)
+            ]);
+            setLiked(hasLiked);
+            setDisliked(hasDisliked);
+          }
         } else {
           setError('Image not found');
         }
@@ -55,7 +64,7 @@ const Display = () => {
 
     fetchImage();
     fetchComments();
-  }, [id]);
+  }, [id, user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -72,28 +81,93 @@ const Display = () => {
   }, []);
 
   const handleLike = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
     try {
-      await imageService.likeImage(id);
-      setLiked(true);
-      setLikeCount(prev => prev + 1);
+      if (liked) {
+        // User already liked, so unlike
+        await imageService.unlikeImage(id);
+        setLiked(false);
+        setLikeCount(prev => prev - 1);
+      } else {
+        // User hasn't liked, so like
+        await imageService.likeImage(id);
+        setLiked(true);
+        setLikeCount(prev => prev + 1);
+        
+        // Backend will automatically remove dislike if it exists
+        if (disliked) {
+          setDisliked(false);
+          setDislikeCount(prev => prev - 1);
+        }
+      }
     } catch (error) {
-      console.error('Error liking image:', error);
+      console.error('Error handling like:', error);
+      if (error.message.includes('401')) {
+        alert('Please log in to like images');
+        navigate('/login');
+      } else {
+        alert('Failed to like image. Please try again.');
+      }
     }
   };
 
   const handleDislike = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
     try {
-      await imageService.unlikeImage(id);
-      setLiked(false);
-      setLikeCount(prev => prev - 1);
+      if (disliked) {
+        // User already disliked, so undislike
+        await imageService.undislikeImage(id);
+        setDisliked(false);
+        setDislikeCount(prev => prev - 1);
+      } else {
+        // User hasn't disliked, so dislike
+        await imageService.dislikeImage(id);
+        setDisliked(true);
+        setDislikeCount(prev => prev + 1);
+        
+        // Backend will automatically remove like if it exists
+        if (liked) {
+          setLiked(false);
+          setLikeCount(prev => prev - 1);
+        }
+      }
     } catch (error) {
-      console.error('Error unliking image:', error);
+      console.error('Error handling dislike:', error);
+      if (error.message.includes('401')) {
+        alert('Please log in to dislike images');
+        navigate('/login');
+      } else {
+        alert('Failed to dislike image. Please try again.');
+      }
     }
   };
 
   const handleMessage = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    // Don't allow messaging yourself
+    if (image && image.user_id === user.id) {
+      alert('You cannot message yourself!');
+      return;
+    }
+    
     // Navigate to direct message with the image author
-    navigate(`/direct-message/${image.user_id}/${image.username}`);
+    if (image && image.user_id && image.username) {
+      navigate(`/direct-message/${image.user_id}/${image.username}`);
+    } else {
+      alert('Unable to start conversation. User information not available.');
+    }
   };
 
   const handleBack = () => {
@@ -108,8 +182,8 @@ const Display = () => {
       setIsSubmittingComment(true);
       const comment = await commentService.addComment(
         id,
-        currentUser.id,
-        currentUser.username,
+        user.id,
+        user.username,
         newComment.trim()
       );
       setComments(prev => [comment, ...prev]);
@@ -124,7 +198,7 @@ const Display = () => {
 
   const handleDeleteComment = async (commentId) => {
     try {
-      await commentService.deleteComment(commentId, currentUser.id);
+      await commentService.deleteComment(commentId, user.id);
       setComments(prev => prev.filter(comment => comment.id !== commentId));
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -147,7 +221,9 @@ const Display = () => {
 
   const handleLogout = () => {
     setShowProfileDropdown(false);
-    navigate('/login');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
 
   const handleUploadClick = () => {
@@ -158,9 +234,9 @@ const Display = () => {
     navigate('/explore');
   };
 
-  const handleDraftsClick = () => {
-    navigate('/drafts');
-  };
+  // const handleDraftsClick = () => {
+  //   navigate('/drafts');
+  // };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -193,7 +269,7 @@ const Display = () => {
           <div className="display-icons">
             <div className="display-icon upload" title="Upload" onClick={handleUploadClick}></div>
             <div className="display-icon file" title="Explore" onClick={handleExploreClick}></div>
-            <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+            {/* <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
@@ -202,7 +278,7 @@ const Display = () => {
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
                   <div className="display-dropdown-username">
-                    {currentUser.username}
+                    {user?.username || 'User'}
                   </div>
                   <button 
                     onClick={() => handleDropdownItemClick('/profile')}
@@ -216,12 +292,12 @@ const Display = () => {
                   >
                     Upload Content
                   </button>
-                  <button 
+                  {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="display-dropdown-item"
                   >
                     My Drafts
-                  </button>
+                  </button> */}
                   <div className="display-dropdown-divider"></div>
                   <button 
                     onClick={handleLogout}
@@ -260,7 +336,7 @@ const Display = () => {
           <div className="display-icons">
             <div className="display-icon upload" title="Upload" onClick={handleUploadClick}></div>
             <div className="display-icon file" title="Explore" onClick={handleExploreClick}></div>
-            <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+            {/* <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
@@ -269,7 +345,7 @@ const Display = () => {
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
                   <div className="display-dropdown-username">
-                    {currentUser.username}
+                    {user?.username || 'User'}
                   </div>
                   <button 
                     onClick={() => handleDropdownItemClick('/profile')}
@@ -283,12 +359,12 @@ const Display = () => {
                   >
                     Upload Content
                   </button>
-                  <button 
+                  {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="display-dropdown-item"
                   >
                     My Drafts
-                  </button>
+                  </button> */}
                   <div className="display-dropdown-divider"></div>
                   <button 
                     onClick={handleLogout}
@@ -331,7 +407,7 @@ const Display = () => {
         <div className="display-icons">
           <div className="display-icon upload" title="Upload" onClick={handleUploadClick}></div>
           <div className="display-icon file" title="Explore" onClick={handleExploreClick}></div>
-          <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+          {/* <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="display-icon bell" title="Notifications"></div>
           <div className="display-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="display-profile-btn">
@@ -340,7 +416,7 @@ const Display = () => {
             {showProfileDropdown && (
               <div className="display-dropdown-menu">
                 <div className="display-dropdown-username">
-                  {currentUser.username}
+                  {user?.username || 'User'}
                 </div>
                 <button 
                   onClick={() => handleDropdownItemClick('/profile')}
@@ -354,12 +430,12 @@ const Display = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="display-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <div className="display-dropdown-divider"></div>
                 <button 
                   onClick={handleLogout}
@@ -388,16 +464,16 @@ const Display = () => {
             <div className="display-actions">
               <div className="display-action-column">
                 <button 
-                  onClick={liked ? handleDislike : handleLike} 
+                  onClick={handleLike} 
                   className={`display-like-btn ${liked ? 'liked' : ''}`}
                 >
-                  {liked ? '💔 Unlike' : '❤️ Like'} ({likeCount})
+                  ❤️ Like ({likeCount})
                 </button>
                 <button 
                   onClick={handleDislike} 
-                  className="display-dislike-btn"
+                  className={`display-dislike-btn ${disliked ? 'disliked' : ''}`}
                 >
-                  👎 Dislike
+                  👎 Dislike ({dislikeCount})
                 </button>
               </div>
               <div className="display-action-column">
@@ -445,7 +521,7 @@ const Display = () => {
                   <div className="comment-header">
                     <span className="comment-author">{comment.username}</span>
                     <span className="comment-date">{formatDate(comment.created_at)}</span>
-                    {comment.user_id === currentUser.id && (
+                    {comment.user_id === user.id && (
                       <button
                         onClick={() => handleDeleteComment(comment.id)}
                         className="comment-delete-btn"

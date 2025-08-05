@@ -82,8 +82,12 @@ export const imageService = {
   // Like an image
   async likeImage(imageId) {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/like`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) {
@@ -100,8 +104,12 @@ export const imageService = {
   // Unlike an image
   async unlikeImage(imageId) {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/unlike`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) {
@@ -112,6 +120,96 @@ export const imageService = {
     } catch (error) {
       console.error('Error unliking image:', error);
       throw error;
+    }
+  },
+
+  // Check if current user has liked an image
+  async checkIfLiked(imageId) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/check-like`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data.liked;
+    } catch (error) {
+      console.error('Error checking like status:', error);
+      return false;
+    }
+  },
+
+  // Dislike an image
+  async dislikeImage(imageId) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/dislike`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error disliking image:', error);
+      throw error;
+    }
+  },
+
+  // Undislike an image
+  async undislikeImage(imageId) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/undislike`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error undisliking image:', error);
+      throw error;
+    }
+  },
+
+  // Check if current user has disliked an image
+  async checkIfDisliked(imageId) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/check-dislike`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data.disliked;
+    } catch (error) {
+      console.error('Error checking dislike status:', error);
+      return false;
     }
   },
 

@@ -38,6 +38,23 @@ const GenreChannel = ({ genre, username, userId }) => {
     }
   }, [genre, username]);
 
+  const handleGenreMessagesLoaded = useCallback((data) => {
+    console.log('🎯 GenreChannel: Received loaded messages for', data.genre, ':', data.messages);
+    if (data.genre === genre) {
+      console.log('✅ GenreChannel: Setting messages for', genre, ':', data.messages.length, 'messages');
+      setMessages(data.messages);
+    } else {
+      console.log('❌ GenreChannel: Genre mismatch. Expected:', genre, 'Received:', data.genre);
+    }
+  }, [genre]);
+
+  const handleGenreMessagesError = useCallback((data) => {
+    console.log('❌ GenreChannel: Error loading messages for', data.genre, ':', data.message);
+    if (data.genre === genre) {
+      console.error('Failed to load genre messages:', data.message);
+    }
+  }, [genre]);
+
   const handleTypingIndicator = useCallback((data) => {
     if (data.userId !== chatService.socket?.id) {
       if (data.username) {
@@ -69,31 +86,41 @@ const GenreChannel = ({ genre, username, userId }) => {
   };
 
   useEffect(() => {
+    console.log('🔄 GenreChannel: useEffect triggered for genre:', genre);
+    
     // Connect to chat service
     chatService.connect({ username, userId });
 
     // Join the genre channel
+    console.log('🔄 GenreChannel: Joining channel:', genre);
     chatService.joinGenreChannel(genre, username);
 
     // Register message callbacks
+    console.log('🔄 GenreChannel: Registering callbacks for genre:', genre);
     chatService.onMessage('genre', handleGenreMessage);
     chatService.onMessage('user-joined', handleUserJoined);
     chatService.onMessage('user-left', handleUserLeft);
     chatService.onMessage('channel-users', handleChannelUsers);
+    chatService.onMessage('genre-messages-loaded', handleGenreMessagesLoaded);
+    chatService.onMessage('genre-messages-error', handleGenreMessagesError);
 
     // Listen for typing indicators
     chatService.listenForTyping(handleTypingIndicator);
 
     // Cleanup on unmount
     return () => {
+      console.log('🔄 GenreChannel: Cleanup for genre:', genre);
       chatService.leaveGenreChannel(genre);
       chatService.offMessage('genre');
       chatService.offMessage('user-joined');
       chatService.offMessage('user-left');
       chatService.offMessage('channel-users');
-      chatService.clearAllCallbacks();
+      chatService.offMessage('genre-messages-loaded');
+      chatService.offMessage('genre-messages-error');
+      // Don't clear all callbacks as it prevents message loading when rejoining
+      // chatService.clearAllCallbacks();
     };
-  }, [genre, username, userId, handleGenreMessage, handleUserJoined, handleUserLeft, handleChannelUsers, handleTypingIndicator]);
+  }, [genre, username, userId, handleGenreMessage, handleUserJoined, handleUserLeft, handleChannelUsers, handleGenreMessagesLoaded, handleGenreMessagesError, handleTypingIndicator]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

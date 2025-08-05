@@ -70,9 +70,9 @@ const GenreChannelPage = () => {
     navigate('/explore');
   };
 
-  const handleDraftsClick = () => {
-    navigate('/drafts');
-  };
+  // const handleDraftsClick = () => {
+  //   navigate('/drafts');
+  // };
 
   if (!genre) {
     return <div className="error-message">No genre specified</div>;
@@ -99,7 +99,7 @@ const GenreChannelPage = () => {
         <div className="genre-icons">
           <div className="genre-icon upload" title="Upload" onClick={handleUploadClick}></div>
           <div className="genre-icon file" title="Explore" onClick={handleExploreClick}></div>
-          <div className="genre-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+          {/* <div className="genre-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="genre-icon bell" title="Notifications"></div>
           <div className="genre-profile-dropdown">
             <button onClick={handleProfileClick} className="genre-profile-btn">
