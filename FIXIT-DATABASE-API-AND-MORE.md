@@ -17,6 +17,11 @@ This document details all the fixes, updates, and improvements implemented for t
 9. [Error Handling and Fallbacks](#error-handling-and-fallbacks)
 10. [Testing and Validation](#testing-and-validation)
 11. [Volume Two: Authentication System Fixes](#volume-two-authentication-system-fixes)
+12. [Volume Three: User Account Management](#volume-three-user-account-management)
+13. [Volume Four: Real-time Chat System](#volume-four-real-time-chat-system)
+14. [Volume Five: Display Page Enhancements](#volume-five-display-page-enhancements)
+15. [Volume Six: Like/Dislike System](#volume-six-likedislike-system)
+16. [Volume Seven: User Popup System](#volume-seven-user-popup-system)
 
 ---
 
@@ -2172,3 +2177,843 @@ const handleLike = async () => {
 5. **Authentication**: All operations require proper JWT authentication
 
 This implementation provides a complete like/dislike system that meets user expectations with intuitive toggle behavior and automatic cross-switching.
+
+---
+
+## Volume Seven: User Popup System
+
+### Overview
+The User Popup system is a comprehensive feature that allows users to view and interact with other users' profiles through popup modals. This system includes profile viewing, editing capabilities, friend management, and messaging functionality.
+
+### **12.1 User Popup System Architecture**
+
+#### **Core Components**
+1. **UserPopup.jsx** - Main popup component
+2. **Profile.jsx** - Profile page integration
+3. **Chat channels** - Username click integration
+4. **Database schema** - User description and genres
+5. **API endpoints** - Profile management
+
+#### **Key Features**
+- **Profile viewing**: Display user banner, description, and top genres
+- **Self-editing**: Users can edit their own profile information
+- **Friend management**: Send/accept/reject friend requests
+- **Direct messaging**: Navigate to direct message chat
+- **Responsive design**: Works on all screen sizes
+
+### **12.2 Database Schema Requirements**
+
+#### **Users Table Extensions**
+```sql
+-- Required columns for user popup functionality
+ALTER TABLE users ADD COLUMN IF NOT EXISTS user_description TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS top_genres TEXT[] DEFAULT '{}';
+```
+
+#### **Friends Table (if not exists)**
+```sql
+CREATE TABLE IF NOT EXISTS friends (
+  id SERIAL PRIMARY KEY,
+  from_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  to_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(from_user_id, to_user_id)
+);
+```
+
+### **12.3 API Endpoints Implementation**
+
+#### **GET /api/auth/profile/:userId**
+```javascript
+// Server/Routes/auth.js
+router.get('/profile/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const result = await pool.query(
+      'SELECT id, username, email, banner_image, profile_picture, user_description, top_genres, created_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+```
+
+#### **PUT /api/auth/profile/:userId/description**
+```javascript
+// Server/Routes/auth.js
+router.put('/profile/:userId/description', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { userDescription, topGenres } = req.body;
+    
+    // Ensure user can only update their own profile
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.id !== parseInt(userId)) {
+      return res.status(403).json({ message: 'Unauthorized to update this profile' });
+    }
+
+    const result = await pool.query(
+      'UPDATE users SET user_description = $1, top_genres = $2 WHERE id = $3 RETURNING id, username, user_description, top_genres',
+      [userDescription, topGenres, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+```
+
+### **12.4 Frontend Implementation**
+
+#### **UserPopup.jsx Component Structure**
+```javascript
+// client/src/components/UserPopup.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { profileService } from '../services/profileService';
+import '../styles/UserPopup.css';
+
+const UserPopup = ({ user, onClose, currentUserId, isOwnProfile = false }) => {
+  // State management
+  const [userDescription, setUserDescription] = useState('');
+  const [topGenres, setTopGenres] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userBannerImage, setUserBannerImage] = useState(null);
+  const [userProfilePicture, setUserProfilePicture] = useState(null);
+  const [isFriend, setIsFriend] = useState(false);
+  const [isRequestSent, setIsRequestSent] = useState(false);
+
+  // Load user data on component mount
+  useEffect(() => {
+    loadUserData();
+    if (!isOwnProfile) {
+      checkFriendStatus();
+    }
+  }, [user.id]);
+
+  // Load user data from API
+  const loadUserData = async () => {
+    try {
+      const userData = await profileService.getUserProfile(user.id);
+      setUserDescription(userData.user_description || '');
+      setTopGenres(userData.top_genres || []);
+      setUserBannerImage(userData.banner_image || null);
+      setUserProfilePicture(userData.profile_picture || null);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  // Save changes to user profile
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+      const updatedUser = await profileService.updateUserDescription(user.id, userDescription, topGenres);
+      
+      if (updatedUser) {
+        setIsEditing(false);
+        alert('Profile updated successfully!');
+        
+        // Update local state with saved data
+        setUserDescription(updatedUser.user_description || '');
+        setTopGenres(updatedUser.top_genres || []);
+      } else {
+        alert('Failed to update profile: No data returned');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Friend management functions
+  const handleSendFriendRequest = async () => {
+    try {
+      const response = await fetch('/api/friends/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromUserId: currentUserId,
+          toUserId: user.id
+        }),
+      });
+      
+      if (response.ok) {
+        setIsRequestSent(true);
+        alert('Friend request sent!');
+      } else {
+        alert('Failed to send friend request');
+      }
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      alert('Failed to send friend request');
+    }
+  };
+
+  const handleRemoveFriend = async () => {
+    try {
+      const response = await fetch(`/api/friends/${currentUserId}/${user.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        setIsFriend(false);
+        alert('Friend removed successfully');
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to remove friend');
+      }
+    } catch (error) {
+      console.error('Error removing friend:', error);
+      alert('Failed to remove friend');
+    }
+  };
+
+  const handleMessageUser = () => {
+    navigate(`/direct-message/${user.id}`);
+    onClose();
+  };
+
+  return (
+    <div className="user-popup-overlay" onClick={onClose}>
+      <div className="user-popup" onClick={(e) => e.stopPropagation()}>
+        {/* Popup content structure */}
+        <div className="user-popup-header">
+          <button className="user-popup-close" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="user-popup-content">
+          {/* User banner */}
+          {userBannerImage && (
+            <div className="user-popup-banner">
+              <img src={userBannerImage} alt="User banner" />
+            </div>
+          )}
+          
+          {/* User info section */}
+          <div className="user-popup-user-info">
+            <div className="user-popup-username">{user.username}</div>
+            
+            {isEditing ? (
+              <div className="user-popup-edit-section">
+                <textarea
+                  value={userDescription}
+                  onChange={(e) => setUserDescription(e.target.value)}
+                  placeholder="Tell us about yourself..."
+                  className="user-popup-description-input"
+                />
+                <div className="user-popup-genres-section">
+                  <label>Top Genres:</label>
+                  <select
+                    multiple
+                    value={topGenres}
+                    onChange={(e) => setTopGenres(Array.from(e.target.selectedOptions, option => option.value))}
+                    className="user-popup-genres-select"
+                  >
+                    {['Action', 'Adventure', 'RPG', 'Strategy', 'Puzzle', 'Racing', 'Sports', 'Simulation', 'Horror', 'Comedy', 'Fantasy', 'Sci-Fi'].map(genre => (
+                      <option key={genre} value={genre}>{genre}</option>
+                    ))}
+                  </select>
+                </div>
+                <button 
+                  onClick={handleSaveChanges} 
+                  disabled={isSaving}
+                  className="user-popup-save-btn"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            ) : (
+              <div className="user-popup-display-section">
+                <div className="user-popup-description">
+                  {userDescription || 'No description available'}
+                </div>
+                <div className="user-popup-genres">
+                  <strong>Top Genres:</strong>
+                  {topGenres.length > 0 ? (
+                    <div className="user-popup-genres-list">
+                      {topGenres.map(genre => (
+                        <span key={genre} className="user-popup-genre-tag">{genre}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span>No genres selected</span>
+                  )}
+                </div>
+                
+                {isOwnProfile && (
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="user-popup-edit-btn"
+                  >
+                    Edit User Info
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Action buttons */}
+        <div className="user-popup-actions">
+          {!isOwnProfile && (
+            <>
+              {!isFriend && !isRequestSent && (
+                <button onClick={handleSendFriendRequest} className="user-popup-friend-btn">
+                  Add Friend
+                </button>
+              )}
+              {isRequestSent && (
+                <button disabled className="user-popup-friend-btn">
+                  Request Sent
+                </button>
+              )}
+              {isFriend && (
+                <button onClick={handleRemoveFriend} className="user-popup-friend-btn">
+                  Unfriend
+                </button>
+              )}
+              <button onClick={handleMessageUser} className="user-popup-message-btn">
+                Message
+              </button>
+            </>
+          )}
+          <button onClick={onClose} className="user-popup-exit-btn">
+            Exit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserPopup;
+```
+
+### **12.5 CSS Styling Implementation**
+
+#### **UserPopup.css**
+```css
+/* client/src/styles/UserPopup.css */
+.user-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.user-popup {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.user-popup-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-popup-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.user-popup-close:hover {
+  color: #333;
+}
+
+.user-popup-content {
+  padding: 20px;
+}
+
+.user-popup-banner {
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.user-popup-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-popup-username {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.user-popup-description {
+  margin-bottom: 15px;
+  line-height: 1.5;
+  color: #666;
+}
+
+.user-popup-genres {
+  margin-bottom: 20px;
+}
+
+.user-popup-genres strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.user-popup-genres-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.user-popup-genre-tag {
+  background: #007bff;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.user-popup-edit-section {
+  margin-top: 15px;
+}
+
+.user-popup-description-input {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  resize: vertical;
+}
+
+.user-popup-genres-section {
+  margin-bottom: 15px;
+}
+
+.user-popup-genres-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.user-popup-genres-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  min-height: 100px;
+}
+
+.user-popup-actions {
+  padding: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.user-popup-save-btn,
+.user-popup-edit-btn,
+.user-popup-friend-btn,
+.user-popup-message-btn,
+.user-popup-exit-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.user-popup-save-btn {
+  background: #28a745;
+  color: white;
+}
+
+.user-popup-save-btn:hover {
+  background: #218838;
+}
+
+.user-popup-edit-btn {
+  background: #007bff;
+  color: white;
+}
+
+.user-popup-edit-btn:hover {
+  background: #0056b3;
+}
+
+.user-popup-friend-btn {
+  background: #17a2b8;
+  color: white;
+}
+
+.user-popup-friend-btn:hover {
+  background: #138496;
+}
+
+.user-popup-message-btn {
+  background: #6f42c1;
+  color: white;
+}
+
+.user-popup-message-btn:hover {
+  background: #5a32a3;
+}
+
+.user-popup-exit-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.user-popup-exit-btn:hover {
+  background: #545b62;
+}
+
+.user-popup-save-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+```
+
+### **12.6 Integration Points**
+
+#### **Profile Page Integration**
+```javascript
+// client/src/pages/Profile.jsx
+import UserPopup from '../components/UserPopup';
+
+// Add state for popup
+const [showUserPopup, setShowUserPopup] = useState(false);
+
+// Add popup component to JSX
+{showUserPopup && (
+  <UserPopup
+    user={user}
+    onClose={() => setShowUserPopup(false)}
+    currentUserId={user.id}
+    isOwnProfile={true}
+  />
+)}
+
+// Add button to trigger popup
+<button onClick={() => setShowUserPopup(true)} className="profile-edit-btn">
+  Edit Profile
+</button>
+```
+
+#### **Chat Channel Integration**
+```javascript
+// In chat channel components
+const handleUsernameClick = (username, userId) => {
+  setSelectedUser({ username, id: userId });
+  setShowUserPopup(true);
+};
+
+// Add to JSX
+{showUserPopup && selectedUser && (
+  <UserPopup
+    user={selectedUser}
+    onClose={() => setShowUserPopup(false)}
+    currentUserId={currentUser.id}
+    isOwnProfile={false}
+  />
+)}
+```
+
+### **12.7 Service Layer Implementation**
+
+#### **profileService.js**
+```javascript
+// client/src/services/profileService.js
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+const profileService = {
+  async getUserProfile(userId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      throw error;
+    }
+  },
+
+  async updateUserDescription(userId, userDescription, topGenres) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile/${userId}/description`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          userDescription,
+          topGenres
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.user;
+    } catch (error) {
+      console.error('Error updating user description:', error);
+      throw error;
+    }
+  }
+};
+
+export { profileService };
+```
+
+### **12.8 Database Migration Script**
+
+#### **do-migration.js**
+```javascript
+// server/do-migration.js
+const { Pool } = require('pg');
+require('dotenv').config();
+
+console.log('🚀 Starting migration...');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+async function doMigration() {
+  try {
+    console.log('📝 Adding user_description column...');
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS user_description TEXT DEFAULT ''
+    `);
+    console.log('✅ user_description column added');
+    
+    console.log('🎮 Adding top_genres column...');
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS top_genres TEXT[] DEFAULT '{}'
+    `);
+    console.log('✅ top_genres column added');
+    
+    console.log('🎉 Migration completed!');
+    
+  } catch (error) {
+    console.error('❌ Migration failed:', error.message);
+  } finally {
+    await pool.end();
+  }
+}
+
+doMigration();
+```
+
+### **12.9 Testing and Validation**
+
+#### **Manual Testing Checklist**
+1. **Database Migration**
+   - [ ] Run migration script successfully
+   - [ ] Verify columns exist in database
+   - [ ] Check default values are set
+
+2. **Profile Page Integration**
+   - [ ] "Edit Profile" button opens popup
+   - [ ] User banner displays correctly
+   - [ ] Description and genres load properly
+   - [ ] Edit mode works correctly
+   - [ ] Save functionality works
+   - [ ] Changes persist after refresh
+
+3. **Chat Channel Integration**
+   - [ ] Username clicks open popup
+   - [ ] Other users' profiles display correctly
+   - [ ] Friend request functionality works
+   - [ ] Message button navigates correctly
+
+4. **Error Handling**
+   - [ ] Network errors handled gracefully
+   - [ ] Invalid user IDs handled
+   - [ ] Unauthorized access prevented
+   - [ ] Loading states display correctly
+
+#### **Automated Testing Script**
+```javascript
+// server/test-user-popup.js
+const { Pool } = require('pg');
+require('dotenv').config();
+
+async function testUserPopup() {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+
+  try {
+    console.log('🧪 Testing User Popup System...');
+
+    // Test 1: Check database columns
+    console.log('\n1. Checking database columns...');
+    const columns = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      AND column_name IN ('user_description', 'top_genres')
+    `);
+    
+    console.log('Found columns:', columns.rows);
+
+    // Test 2: Test profile update
+    console.log('\n2. Testing profile update...');
+    const updateResult = await pool.query(`
+      UPDATE users 
+      SET user_description = 'Test description', top_genres = ARRAY['Action', 'RPG']
+      WHERE id = 1 
+      RETURNING id, username, user_description, top_genres
+    `);
+    
+    console.log('Update result:', updateResult.rows[0]);
+
+    // Test 3: Test profile retrieval
+    console.log('\n3. Testing profile retrieval...');
+    const profileResult = await pool.query(`
+      SELECT id, username, user_description, top_genres 
+      FROM users WHERE id = 1
+    `);
+    
+    console.log('Profile result:', profileResult.rows[0]);
+
+    console.log('\n✅ All tests passed!');
+
+  } catch (error) {
+    console.error('❌ Test failed:', error.message);
+  } finally {
+    await pool.end();
+  }
+}
+
+testUserPopup();
+```
+
+### **12.10 Common Issues and Solutions**
+
+#### **Issue 1: Database Columns Missing**
+**Error**: `column "user_description" does not exist`
+**Solution**: Run the migration script
+```bash
+cd server && node do-migration.js
+```
+
+#### **Issue 2: Popup Not Displaying**
+**Error**: Popup doesn't open when clicking usernames
+**Solution**: Check event handlers and state management
+```javascript
+// Ensure click handler is properly bound
+onClick={() => handleUsernameClick(user.username, user.id)}
+```
+
+#### **Issue 3: Save Not Working**
+**Error**: Changes don't persist after saving
+**Solution**: Check API endpoint and token validation
+```javascript
+// Ensure token is included in request
+headers: {
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
+}
+```
+
+#### **Issue 4: Styling Issues**
+**Error**: Popup doesn't look correct
+**Solution**: Verify CSS is imported and classes are applied
+```javascript
+import '../styles/UserPopup.css';
+```
+
+### **12.11 Performance Considerations**
+
+1. **Lazy Loading**: Load user data only when popup opens
+2. **Caching**: Cache user data to avoid repeated API calls
+3. **Debouncing**: Debounce save operations to prevent spam
+4. **Image Optimization**: Compress and optimize banner images
+
+### **12.12 Security Considerations**
+
+1. **Authorization**: Users can only edit their own profiles
+2. **Input Validation**: Sanitize user inputs
+3. **Rate Limiting**: Prevent abuse of friend requests
+4. **Token Validation**: Verify JWT tokens on all requests
+
+### **12.13 Future Enhancements**
+
+1. **Real-time Updates**: WebSocket integration for live profile updates
+2. **Image Upload**: Direct image upload in popup
+3. **Activity Feed**: Show user's recent activity
+4. **Privacy Settings**: Allow users to control profile visibility
+5. **Blocking System**: Allow users to block others
+
+This comprehensive User Popup system provides a complete solution for user interaction and profile management in the GamePen application.
