@@ -234,9 +234,9 @@ const Display = () => {
     navigate('/explore');
   };
 
-  const handleDraftsClick = () => {
-    navigate('/drafts');
-  };
+  // const handleDraftsClick = () => {
+  //   navigate('/drafts');
+  // };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -269,7 +269,7 @@ const Display = () => {
           <div className="display-icons">
             <div className="display-icon upload" title="Upload" onClick={handleUploadClick}></div>
             <div className="display-icon file" title="Explore" onClick={handleExploreClick}></div>
-            <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+            {/* <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
@@ -292,12 +292,12 @@ const Display = () => {
                   >
                     Upload Content
                   </button>
-                  <button 
+                  {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="display-dropdown-item"
                   >
                     My Drafts
-                  </button>
+                  </button> */}
                   <div className="display-dropdown-divider"></div>
                   <button 
                     onClick={handleLogout}
@@ -336,7 +336,7 @@ const Display = () => {
           <div className="display-icons">
             <div className="display-icon upload" title="Upload" onClick={handleUploadClick}></div>
             <div className="display-icon file" title="Explore" onClick={handleExploreClick}></div>
-            <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+            {/* <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
@@ -359,12 +359,12 @@ const Display = () => {
                   >
                     Upload Content
                   </button>
-                  <button 
+                  {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="display-dropdown-item"
                   >
                     My Drafts
-                  </button>
+                  </button> */}
                   <div className="display-dropdown-divider"></div>
                   <button 
                     onClick={handleLogout}
@@ -407,7 +407,7 @@ const Display = () => {
         <div className="display-icons">
           <div className="display-icon upload" title="Upload" onClick={handleUploadClick}></div>
           <div className="display-icon file" title="Explore" onClick={handleExploreClick}></div>
-          <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+          {/* <div className="display-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="display-icon bell" title="Notifications"></div>
           <div className="display-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="display-profile-btn">
@@ -430,12 +430,12 @@ const Display = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="display-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <div className="display-dropdown-divider"></div>
                 <button 
                   onClick={handleLogout}

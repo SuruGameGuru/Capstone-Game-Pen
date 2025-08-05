@@ -150,9 +150,9 @@ const Friends = () => {
     navigate('/explore');
   };
 
-  const handleDraftsClick = () => {
-    navigate('/drafts');
-  };
+  // const handleDraftsClick = () => {
+  //   navigate('/drafts');
+  // };
 
   const filteredFriends = friends.filter(friend => 
     friend.username.toLowerCase().includes(searchTerm.toLowerCase())
@@ -179,7 +179,7 @@ const Friends = () => {
           <div className="friends-icons">
             <div className="friends-icon upload" title="Upload" onClick={handleUploadClick}></div>
             <div className="friends-icon file" title="Explore" onClick={handleExploreClick}></div>
-            <div className="friends-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+            {/* <div className="friends-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="friends-icon bell" title="Notifications"></div>
             <div className="friends-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="friends-profile-btn">
@@ -202,12 +202,12 @@ const Friends = () => {
                   >
                     Upload Content
                   </button>
-                  <button 
+                  {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="friends-dropdown-item"
                   >
                     My Drafts
-                  </button>
+                  </button> */}
                   <button 
                     onClick={() => handleDropdownItemClick('/friends')}
                     className="friends-dropdown-item"
@@ -252,7 +252,7 @@ const Friends = () => {
         <div className="friends-icons">
           <div className="friends-icon upload" title="Upload" onClick={handleUploadClick}></div>
           <div className="friends-icon file" title="Explore" onClick={handleExploreClick}></div>
-          <div className="friends-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+          {/* <div className="friends-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="friends-icon bell" title="Notifications"></div>
           <div className="friends-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="friends-profile-btn">
@@ -275,12 +275,12 @@ const Friends = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="friends-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <button 
                   onClick={() => handleDropdownItemClick('/friends')}
                   className="friends-dropdown-item"

@@ -141,9 +141,9 @@ const DirectMessage = () => {
     navigate('/explore');
   };
 
-  const handleDraftsClick = () => {
-    navigate('/drafts');
-  };
+  // const handleDraftsClick = () => {
+  //   navigate('/drafts');
+  // };
 
   const handleFriendsClick = () => {
     navigate('/friends');
@@ -177,7 +177,7 @@ const DirectMessage = () => {
           <div className="direct-message-icons">
             <div className="direct-message-icon upload" title="Upload" onClick={handleUploadClick}></div>
             <div className="direct-message-icon file" title="Explore" onClick={handleExploreClick}></div>
-            <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+            {/* <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="direct-message-icon bell" title="Notifications"></div>
             <div className="direct-message-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="direct-message-profile-btn">
@@ -200,12 +200,12 @@ const DirectMessage = () => {
                   >
                     Upload Content
                   </button>
-                  <button 
+                  {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="direct-message-dropdown-item"
                   >
                     My Drafts
-                  </button>
+                  </button> */}
                   <button 
                     onClick={() => handleDropdownItemClick('/friends')}
                     className="direct-message-dropdown-item"
@@ -250,7 +250,7 @@ const DirectMessage = () => {
         <div className="direct-message-icons">
           <div className="direct-message-icon upload" title="Upload" onClick={handleUploadClick}></div>
           <div className="direct-message-icon file" title="Explore" onClick={handleExploreClick}></div>
-          <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+          {/* <div className="direct-message-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="direct-message-icon bell" title="Notifications"></div>
           <div className="direct-message-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="direct-message-profile-btn">
@@ -273,12 +273,12 @@ const DirectMessage = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="direct-message-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <button 
                   onClick={() => handleDropdownItemClick('/friends')}
                   className="direct-message-dropdown-item"

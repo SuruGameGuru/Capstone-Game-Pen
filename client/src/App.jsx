@@ -11,7 +11,7 @@ import ExploreArt from './pages/ExploreArt';
 import ExploreGames from './pages/ExploreGames';
 import Landing from './pages/Landing';
 import GenreChannel from './pages/GenreChannel';
-import Drafts from './pages/Drafts';
+// import Drafts from './pages/Drafts';
 import Display from './pages/Display';
 import MyGames from './pages/MyGames';
 import MyArt from './pages/MyArt';
@@ -49,14 +49,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/drafts"
             element={
               <ProtectedRoute>
                 <Drafts />
               </ProtectedRoute>
             }
-          />
+          /> */}
           <Route
             path="/mygames"
             element={

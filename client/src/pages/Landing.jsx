@@ -116,12 +116,12 @@ const Landing = () => {
                     >
                       Upload Content
                     </button>
-                    <button 
-                      onClick={() => handleDropdownItemClick('/drafts')}
-                      className="landing-dropdown-item"
-                    >
-                      My Drafts
-                    </button>
+                                    {/* <button 
+                  onClick={() => handleDropdownItemClick('/drafts')}
+                  className="landing-dropdown-item"
+                >
+                  My Drafts
+                </button> */}
                     <div className="landing-dropdown-divider"></div>
                     <button 
                       onClick={handleLogout}

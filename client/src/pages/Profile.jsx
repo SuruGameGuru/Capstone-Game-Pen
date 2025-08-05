@@ -290,9 +290,9 @@ const Profile = () => {
     navigate('/myart');
   };
 
-  const handleDraftsClick = () => {
-    navigate('/drafts');
-  };
+  // const handleDraftsClick = () => {
+  //   navigate('/drafts');
+  // };
 
   const handleUploadClick = () => {
     navigate('/upload');
@@ -323,7 +323,7 @@ const Profile = () => {
         <div className="profile-icons">
           <div className="profile-icon upload" title="Upload" onClick={handleUploadClick}></div>
           <div className="profile-icon file" title="Explore" onClick={handleExploreClick}></div>
-          <div className="profile-icon drafts" title="Drafts" onClick={handleDraftsClick}></div>
+          {/* <div className="profile-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="profile-icon bell" title="Notifications"></div>
           <div className="profile-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="profile-profile-btn">
@@ -346,12 +346,12 @@ const Profile = () => {
                 >
                   Upload Content
                 </button>
-                <button 
+                {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
                   className="profile-dropdown-item"
                 >
                   My Drafts
-                </button>
+                </button> */}
                 <button 
                   onClick={() => handleDropdownItemClick('/friends')}
                   className="profile-dropdown-item"
