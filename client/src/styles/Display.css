@@ -270,11 +270,11 @@ body, html {
 }
 
 .display-like-btn.liked {
-  background: #ef4444;
+  background: #10b981;
 }
 
 .display-like-btn.liked:hover {
-  background: #dc2626;
+  background: #059669;
 }
 
 .display-dislike-btn {
@@ -286,11 +286,11 @@ body, html {
 }
 
 .display-dislike-btn.disliked {
-  background: #10b981;
+  background: #dc2626;
 }
 
 .display-dislike-btn.disliked:hover {
-  background: #059669;
+  background: #b91c1c;
 }
 
 .display-back-btn {
