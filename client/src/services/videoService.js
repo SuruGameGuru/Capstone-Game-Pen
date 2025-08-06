@@ -135,6 +135,50 @@ const videoService = {
     }
   },
 
+  // Dislike a video
+  async dislikeVideo(videoId) {
+    try {
+      const response = await api.post(`/videos/${videoId}/dislike`);
+      return response.data;
+    } catch (error) {
+      console.error('Error disliking video:', error);
+      throw error;
+    }
+  },
+
+  // Undislike a video
+  async undislikeVideo(videoId) {
+    try {
+      const response = await api.post(`/videos/${videoId}/undislike`);
+      return response.data;
+    } catch (error) {
+      console.error('Error undisliking video:', error);
+      throw error;
+    }
+  },
+
+  // Check if user has disliked a video
+  async checkIfDisliked(videoId) {
+    try {
+      const response = await api.get(`/videos/${videoId}/check-dislike`);
+      return response.data.hasDisliked;
+    } catch (error) {
+      console.error('Error checking video dislike status:', error);
+      return false;
+    }
+  },
+
+  // Get video dislike count
+  async getVideoDislikes(videoId) {
+    try {
+      const response = await api.get(`/videos/${videoId}/dislikes`);
+      return response.data.dislikeCount;
+    } catch (error) {
+      console.error('Error fetching video dislikes:', error);
+      return 0;
+    }
+  },
+
   // Delete video
   async deleteVideo(videoId) {
     try {

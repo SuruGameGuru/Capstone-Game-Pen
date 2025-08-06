@@ -105,7 +105,9 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
     
     const query = `
-      SELECT v.*, u.username 
+      SELECT v.*, u.username,
+             (SELECT COUNT(*) FROM video_likes WHERE video_id = v.id) as like_count,
+             (SELECT COUNT(*) FROM video_dislikes WHERE video_id = v.id) as dislike_count
       FROM videos v 
       JOIN users u ON v.user_id = u.id 
       WHERE v.id = $1
@@ -187,6 +189,12 @@ router.post('/:id/like', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Video already liked' });
     }
     
+    // Remove dislike if it exists (cross-switching)
+    await pool.query(
+      'DELETE FROM video_dislikes WHERE video_id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    
     // Add like
     const insertQuery = `
       INSERT INTO video_likes (video_id, user_id)
@@ -247,6 +255,113 @@ router.get('/:id/likes', async (req, res) => {
   }
 });
 
+// Dislike a video - WITH AUTHENTICATION
+router.post('/:id/dislike', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    // Check if already disliked
+    const checkQuery = `
+      SELECT COUNT(*) as count 
+      FROM video_dislikes 
+      WHERE video_id = $1 AND user_id = $2
+    `;
+    
+    const checkResult = await pool.query(checkQuery, [id, userId]);
+    
+    if (parseInt(checkResult.rows[0].count) > 0) {
+      return res.status(400).json({ message: 'Video already disliked' });
+    }
+    
+    // Remove like if it exists (cross-switching)
+    await pool.query(
+      'DELETE FROM video_likes WHERE video_id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    
+    // Add dislike
+    const insertQuery = `
+      INSERT INTO video_dislikes (video_id, user_id)
+      VALUES ($1, $2)
+    `;
+    
+    await pool.query(insertQuery, [id, userId]);
+    
+    res.json({ message: 'Video disliked successfully' });
+  } catch (error) {
+    console.error('Dislike video error:', error);
+    res.status(500).json({ message: 'Error disliking video' });
+  }
+});
+
+// Undislike a video - WITH AUTHENTICATION
+router.post('/:id/undislike', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    const query = `
+      DELETE FROM video_dislikes 
+      WHERE video_id = $1 AND user_id = $2
+    `;
+    
+    const result = await pool.query(query, [id, userId]);
+    
+    if (result.rowCount === 0) {
+      return res.status(400).json({ message: 'Dislike not found' });
+    }
+    
+    res.json({ message: 'Video undisliked successfully' });
+  } catch (error) {
+    console.error('Undislike video error:', error);
+    res.status(500).json({ message: 'Error undisliking video' });
+  }
+});
+
+// Check if user has disliked a video - WITH AUTHENTICATION
+router.get('/:id/check-dislike', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    const query = `
+      SELECT COUNT(*) as count 
+      FROM video_dislikes 
+      WHERE video_id = $1 AND user_id = $2
+    `;
+    
+    const result = await pool.query(query, [id, userId]);
+    const hasDisliked = parseInt(result.rows[0].count) > 0;
+    
+    res.json({ hasDisliked });
+  } catch (error) {
+    console.error('Check video dislike error:', error);
+    res.status(500).json({ message: 'Error checking video dislike status' });
+  }
+});
+
+// Get video dislike count
+router.get('/:id/dislikes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const query = `
+      SELECT COUNT(*) as count 
+      FROM video_dislikes 
+      WHERE video_id = $1
+    `;
+    
+    const result = await pool.query(query, [id]);
+    const dislikeCount = parseInt(result.rows[0].count);
+    
+    res.json({ dislikeCount });
+  } catch (error) {
+    console.error('Get video dislikes error:', error);
+    res.status(500).json({ message: 'Error fetching video dislikes' });
+  }
+});
+
 // Delete video - WITH AUTHENTICATION (only video owner)
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
@@ -270,6 +385,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     
     // Delete video likes first (due to foreign key constraint)
     await pool.query('DELETE FROM video_likes WHERE video_id = $1', [id]);
+    
+    // Delete video dislikes first (due to foreign key constraint)
+    await pool.query('DELETE FROM video_dislikes WHERE video_id = $1', [id]);
     
     // Delete the video
     const deleteQuery = `

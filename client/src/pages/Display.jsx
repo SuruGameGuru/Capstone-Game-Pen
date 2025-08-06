@@ -36,13 +36,17 @@ const Display = () => {
         if (isVideo) {
           contentData = await videoService.getVideo(id);
           if (contentData) {
-            const likeCountData = await videoService.getVideoLikes(id);
-            setLikeCount(likeCountData);
+            setLikeCount(contentData.like_count || 0);
+            setDislikeCount(contentData.dislike_count || 0);
             
-            // Check if current user has liked this video
+            // Check if current user has liked or disliked this video
             if (user) {
-              const hasLiked = await videoService.checkIfLiked(id);
+              const [hasLiked, hasDisliked] = await Promise.all([
+                videoService.checkIfLiked(id),
+                videoService.checkIfDisliked(id)
+              ]);
               setLiked(hasLiked);
+              setDisliked(hasDisliked);
             }
           }
         } else {
@@ -159,30 +163,50 @@ const Display = () => {
     }
     
     try {
-      if (disliked) {
-        // User already disliked, so undislike
-        await imageService.undislikeImage(id);
-        setDisliked(false);
-        setDislikeCount(prev => prev - 1);
+      if (isVideo) {
+        if (disliked) {
+          // User already disliked, so undislike
+          await videoService.undislikeVideo(id);
+          setDisliked(false);
+          setDislikeCount(prev => prev - 1);
+        } else {
+          // User hasn't disliked, so dislike
+          await videoService.dislikeVideo(id);
+          setDisliked(true);
+          setDislikeCount(prev => prev + 1);
+          
+          // Backend will automatically remove like if it exists
+          if (liked) {
+            setLiked(false);
+            setLikeCount(prev => prev - 1);
+          }
+        }
       } else {
-        // User hasn't disliked, so dislike
-        await imageService.dislikeImage(id);
-        setDisliked(true);
-        setDislikeCount(prev => prev + 1);
-        
-        // Backend will automatically remove like if it exists
-        if (liked) {
-          setLiked(false);
-          setLikeCount(prev => prev - 1);
+        if (disliked) {
+          // User already disliked, so undislike
+          await imageService.undislikeImage(id);
+          setDisliked(false);
+          setDislikeCount(prev => prev - 1);
+        } else {
+          // User hasn't disliked, so dislike
+          await imageService.dislikeImage(id);
+          setDisliked(true);
+          setDislikeCount(prev => prev + 1);
+          
+          // Backend will automatically remove like if it exists
+          if (liked) {
+            setLiked(false);
+            setLikeCount(prev => prev - 1);
+          }
         }
       }
     } catch (error) {
       console.error('Error handling dislike:', error);
       if (error.message.includes('401')) {
-        alert('Please log in to dislike images');
+        alert('Please log in to dislike content');
         navigate('/login');
       } else {
-        alert('Failed to dislike image. Please try again.');
+        alert('Failed to dislike content. Please try again.');
       }
     }
   };
@@ -515,14 +539,12 @@ const Display = () => {
                 >
                   ❤️ Like ({likeCount})
                 </button>
-                {!isVideo && (
-                  <button 
-                    onClick={handleDislike} 
-                    className={`display-dislike-btn ${disliked ? 'disliked' : ''}`}
-                  >
-                    👎 Dislike ({dislikeCount})
-                  </button>
-                )}
+                <button 
+                  onClick={handleDislike} 
+                  className={`display-dislike-btn ${disliked ? 'disliked' : ''}`}
+                >
+                  👎 Dislike ({dislikeCount})
+                </button>
               </div>
               <div className="display-action-column">
                 <button onClick={handleMessage} className="display-message-btn">
