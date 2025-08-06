@@ -1,15 +1,22 @@
 // server/multerConfig.js
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('./cloudinaryConfig');
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'game-pen-uploads',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
+// Use memory storage instead of CloudinaryStorage to avoid version conflicts
+const storage = multer.memoryStorage();
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
+  fileFilter: (req, file, cb) => {
+    // Check file type
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
 });
 
-module.exports = multer({ storage }); 
+module.exports = upload; 
