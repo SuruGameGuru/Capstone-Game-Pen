@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { videoService } from '../services/videoService';
 import Logo from '../components/Logo';
 import '../styles/ExploreGames.css';
 
@@ -7,14 +8,26 @@ const ExploreGames = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [displayCount, setDisplayCount] = useState(30);
   const [isLoading, setIsLoading] = useState(false);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Sample content data - replace with API call in real app
-  const allContent = [
-    // ... (copy game items from Explore.jsx)
-  ];
+  // Fetch videos on component mount
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true);
+        const videoData = await videoService.getVideos({ is_public: true, limit: 100 });
+        setVideos(videoData);
+      } catch (error) {
+        console.error('Error fetching videos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const gameContent = allContent.filter(content => content.type === 'Game');
+    fetchVideos();
+  }, []);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -23,20 +36,21 @@ const ExploreGames = () => {
   const handleShowMore = async () => {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    setDisplayCount(prev => Math.min(prev + 30, gameContent.length));
+    setDisplayCount(prev => Math.min(prev + 30, filteredVideos.length));
     setIsLoading(false);
   };
 
-  const handleContentClick = (content) => {
-    navigate(`/display/${content.id}`);
+  const handleContentClick = (video) => {
+    navigate(`/display/video/${video.id}`);
   };
 
-  const filteredContent = gameContent.filter(content =>
-    content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    content.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredVideos = videos.filter(video =>
+    video.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    video.genre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    video.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const displayedContent = filteredContent.slice(0, displayCount);
-  const hasMoreContent = displayCount < filteredContent.length;
+  const displayedVideos = filteredVideos.slice(0, displayCount);
+  const hasMoreContent = displayCount < filteredVideos.length;
 
   return (
     <div className="explore-page">
@@ -57,19 +71,24 @@ const ExploreGames = () => {
       <main className="explore-main">
         <h1 className="explore-title">Explore Games</h1>
         <div className="explore-container">
-          {displayedContent.length > 0 ? (
+          {loading ? (
+            <div className="explore-loading">Loading videos...</div>
+          ) : displayedVideos.length > 0 ? (
             <>
               <div className="explore-grid">
-                {displayedContent.map((content) => (
+                {displayedVideos.map((video) => (
                   <div
-                    key={content.id}
+                    key={video.id}
                     className="explore-box"
-                    onClick={() => handleContentClick(content)}
+                    onClick={() => handleContentClick(video)}
                   >
-                    <div className="explore-box-icon">{content.icon}</div>
-                    <h3 className="explore-box-title">{content.title}</h3>
-                    <span className="explore-box-type">{content.type}</span>
-                    <p className="explore-box-description">{content.description}</p>
+                    <div className="explore-box-icon">🎮</div>
+                    <h3 className="explore-box-title">{video.description || 'Untitled Game Demo'}</h3>
+                    <span className="explore-box-type">Game Demo</span>
+                    <p className="explore-box-description">by {video.username}</p>
+                    {video.genre && (
+                      <span className="explore-box-genre">{video.genre}</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -88,9 +107,9 @@ const ExploreGames = () => {
           ) : (
             <div className="explore-empty">
               <div className="explore-empty-icon">🔍</div>
-              <h2 className="explore-empty-title">No Games Found</h2>
+              <h2 className="explore-empty-title">No Game Demos Found</h2>
               <p className="explore-empty-text">
-                Try adjusting your search terms or browse all games.
+                Try adjusting your search terms or upload a new game demo.
               </p>
             </div>
           )}

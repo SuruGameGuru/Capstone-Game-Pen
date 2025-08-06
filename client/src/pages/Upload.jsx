@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
+import VideoUpload from '../components/VideoUpload';
 import '../styles/Upload.css';
 import '../styles/Profile.css'; // For profile-route-btn
 import '../styles/ImageUpload.css';
@@ -155,7 +156,7 @@ const Upload = () => {
         <div className="upload-modal-overlay" onClick={() => setShowUploadModal(false)}>
           <div className="upload-modal" onClick={(e) => e.stopPropagation()}>
             <div className="upload-modal-header">
-              <h2>Upload New {uploadType === 'art' ? 'Art' : 'Game'}</h2>
+              <h2>Upload New {uploadType === 'art' ? 'Art' : 'Game Demo'}</h2>
               <button 
                 className="upload-modal-close"
                 onClick={() => setShowUploadModal(false)}
@@ -163,11 +164,19 @@ const Upload = () => {
                 ×
               </button>
             </div>
-            <ImageUpload 
-              uploadType={uploadType}
-              onUploadSuccess={handleUploadSuccess}
-              onUploadError={handleUploadError}
-            />
+            {uploadType === 'art' ? (
+              <ImageUpload 
+                uploadType={uploadType}
+                onUploadSuccess={handleUploadSuccess}
+                onUploadError={handleUploadError}
+              />
+            ) : (
+              <VideoUpload 
+                uploadType={uploadType}
+                onUploadSuccess={handleUploadSuccess}
+                onUploadError={handleUploadError}
+              />
+            )}
           </div>
         </div>
       )}

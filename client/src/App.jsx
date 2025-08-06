@@ -30,6 +30,7 @@ function App() {
           <Route path="/explore/games" element={<ExploreGames />} />
           <Route path="/landing" element={<Landing />} />
           <Route path="/display/:id" element={<Display />} />
+          <Route path="/display/video/:id" element={<Display />} />
           <Route path="/genre/:genre" element={<GenreChannel />} />
           <Route path="/" element={<Landing />} />
 

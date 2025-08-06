@@ -1,15 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import { videoService } from '../services/videoService';
 import '../styles/Upload.css';
 
 const MyGames = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const dropdownRef = useRef(null);
 
   const [userData, setUserData] = useState({
-    username: 'User Name'
+    username: user?.username || 'User Name'
   });
 
   // Close dropdown when clicking outside
@@ -40,30 +45,42 @@ const MyGames = () => {
     navigate('/');
   };
 
-  // Replace with real user-uploaded games from API
-  const [gameContent] = useState([
-    { id: 1, title: 'Space Adventure Game', icon: '🎮', description: '2D platformer with unique gravity mechanics' },
-    { id: 2, title: 'Puzzle Game Demo', icon: '🧩', description: 'Brain-teasing puzzle mechanics' },
-    // ...more user games
-  ]);
+  // Fetch user's videos on component mount
+  useEffect(() => {
+    const fetchUserVideos = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const videoData = await videoService.getUserVideos(user.id, false); // Get all videos (public and private)
+        setVideos(videoData);
+      } catch (error) {
+        console.error('Error fetching user videos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserVideos();
+  }, [user?.id]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleUploadClick = (content) => {
-    // Handle upload click - would open upload modal or navigate to upload form
-    console.log('Upload clicked for:', content);
+  const handleUploadClick = (video) => {
+    // Navigate to video display page
+    navigate(`/display/video/${video.id}`);
   };
 
   const handleNewUpload = () => {
-    // Handle new upload creation
-    console.log('Create new game upload');
+    // Navigate to upload page
+    navigate('/upload');
   };
 
-  const filteredGameContent = gameContent.filter(content =>
-    content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    content.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredVideos = videos.filter(video =>
+    video.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    video.genre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -126,19 +143,21 @@ const MyGames = () => {
       <main className="upload-main">
         <h1 className="upload-title">My Uploaded Games</h1>
         <div className="upload-container">
-          <h2 className="upload-section-header">Games</h2>
+          <h2 className="upload-section-header">Game Demos</h2>
           <div className="upload-row">
-            {filteredGameContent.map((content) => (
+            {loading ? (
+              <div className="upload-loading">Loading your game demos...</div>
+            ) : filteredVideos.map((video) => (
               <div
-                key={content.id}
+                key={video.id}
                 className="upload-box"
-                onClick={() => handleUploadClick(content)}
+                onClick={() => handleUploadClick(video)}
               >
-                <div className="upload-box-icon">{content.icon}</div>
-                <h3 className="upload-box-title">{content.title}</h3>
-                <span className="upload-box-type">Game</span>
-                <p className="upload-box-description">{content.description}</p>
-                <button className="upload-action-btn">Upload</button>
+                <div className="upload-box-icon">🎮</div>
+                <h3 className="upload-box-title">{video.description || 'Untitled Game Demo'}</h3>
+                <span className="upload-box-type">Game Demo</span>
+                <p className="upload-box-description">{video.genre || 'No genre'}</p>
+                <button className="upload-action-btn">View</button>
               </div>
             ))}
             {/* Add New Game Box */}
@@ -147,19 +166,19 @@ const MyGames = () => {
               onClick={handleNewUpload}
             >
               <div className="upload-box-icon">➕</div>
-              <h3 className="upload-box-title">Add New Game</h3>
-              <span className="upload-box-type">Game</span>
-              <p className="upload-box-description">Upload a new game project</p>
+              <h3 className="upload-box-title">Add New Game Demo</h3>
+              <span className="upload-box-type">Game Demo</span>
+              <p className="upload-box-description">Upload a new game demo video</p>
               <button className="upload-action-btn">Create</button>
             </div>
           </div>
           {/* Empty State */}
-          {filteredGameContent.length === 0 && searchTerm && (
+          {filteredVideos.length === 0 && !loading && (
             <div className="upload-empty">
-              <div className="upload-empty-icon">🔍</div>
-              <h2 className="upload-empty-title">No Games Found</h2>
+              <div className="upload-empty-icon">🎮</div>
+              <h2 className="upload-empty-title">No Game Demos Found</h2>
               <p className="upload-empty-text">
-                Try adjusting your search terms or create a new game.
+                {searchTerm ? 'Try adjusting your search terms or' : ''} Upload your first game demo!
               </p>
             </div>
           )}

@@ -7,14 +7,14 @@ const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 100 * 1024 * 1024, // 100MB limit for videos
   },
   fileFilter: (req, file, cb) => {
-    // Check file type
-    if (file.mimetype.startsWith('image/')) {
+    // Check file type - accept both images and videos
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed!'), false);
+      cb(new Error('Only image and video files are allowed!'), false);
     }
   }
 });
