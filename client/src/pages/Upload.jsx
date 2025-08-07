@@ -102,8 +102,6 @@ const Upload = () => {
         </Link>
         
         <nav className="upload-navbar">
-          <Link to="/">Home</Link>
-          <Link to="/explore">Explore</Link>
           <div className="upload-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="upload-profile-btn">
               {userProfilePic ? (
@@ -132,6 +130,12 @@ const Upload = () => {
                   className="upload-dropdown-item"
                 >
                   Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/explore')}
+                  className="upload-dropdown-item"
+                >
+                  Explore
                 </button>
                 {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
