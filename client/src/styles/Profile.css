@@ -274,7 +274,7 @@ body, html {
 /* Banner Section */
 .profile-banner {
   margin-top: 70px;
-  height: 200px;
+  height: 280px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: relative;
   display: flex;
@@ -316,12 +316,16 @@ body, html {
 
 /* User Info Section */
 .profile-user-info {
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 2px solid #C0C0C0;
+  border-radius: 16px;
   padding: 30px 40px;
   display: flex;
   align-items: center;
   gap: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  margin: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .profile-pic {
@@ -352,7 +356,8 @@ body, html {
 .profile-username {
   font-size: 24px;
   font-weight: bold;
-  color: #111827;
+  color: #000000;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 /* Content Section */
