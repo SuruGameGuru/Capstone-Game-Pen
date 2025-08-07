@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import { profileService } from '../services/profileService';
 import ImageUpload from '../components/ImageUpload';
 import VideoUpload from '../components/VideoUpload';
 import '../styles/Upload.css';
@@ -7,10 +9,12 @@ import '../styles/Profile.css'; // For profile-route-btn
 import '../styles/ImageUpload.css';
 
 const Upload = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadType, setUploadType] = useState('art');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [userProfilePic, setUserProfilePic] = useState(null);
   const dropdownRef = useRef(null);
 
   const [userData, setUserData] = useState({
@@ -30,6 +34,34 @@ const Upload = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+        setUserData({
+          username: profileData.username || user.username || 'User Name'
+        });
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   const handleProfileClick = () => {
     setShowProfileDropdown(!showProfileDropdown);
@@ -74,7 +106,15 @@ const Upload = () => {
           <Link to="/explore">Explore</Link>
           <div className="upload-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="upload-profile-btn">
-              Profile ▼
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="upload-profile-pic"
+                />
+              ) : (
+                <div className="upload-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="upload-dropdown-menu">
