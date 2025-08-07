@@ -4,6 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
 import { videoService } from '../services/videoService';
 import { commentService } from '../services/commentService';
+import { profileService } from '../services/profileService';
 import '../styles/Display.css';
 
 const Display = () => {
@@ -22,6 +23,7 @@ const Display = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userProfilePic, setUserProfilePic] = useState(null);
   const dropdownRef = useRef(null);
   
   // Determine if this is a video or image based on URL or type parameter
@@ -106,6 +108,31 @@ const Display = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   const handleLike = async () => {
     if (!user) {
@@ -340,7 +367,15 @@ const Display = () => {
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
-                Profile ▼
+                {userProfilePic ? (
+                  <img
+                    src={userProfilePic}
+                    alt="Profile Picture"
+                    className="display-profile-pic"
+                  />
+                ) : (
+                  <div className="display-profile-pic-placeholder">Profile</div>
+                )}
               </button>
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
@@ -407,7 +442,15 @@ const Display = () => {
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
-                Profile ▼
+                {userProfilePic ? (
+                  <img
+                    src={userProfilePic}
+                    alt="Profile Picture"
+                    className="display-profile-pic"
+                  />
+                ) : (
+                  <div className="display-profile-pic-placeholder">Profile</div>
+                )}
               </button>
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
@@ -478,7 +521,15 @@ const Display = () => {
           <div className="display-icon bell" title="Notifications"></div>
           <div className="display-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="display-profile-btn">
-              Profile ▼
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="display-profile-pic"
+                />
+              ) : (
+                <div className="display-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="display-dropdown-menu">

@@ -1,11 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
 import { videoService } from '../services/videoService';
+import { profileService } from '../services/profileService';
 import DominantColorThumbnail from '../components/DominantColorThumbnail';
 import '../styles/Landing.css';
 
 const Landing = () => {
+  const { user } = useUser();
   const genres = [
     'Action',
     'Adventure',
@@ -28,6 +31,7 @@ const Landing = () => {
   const [latestGameVideos, setLatestGameVideos] = useState([]);
   const [isLoadingArt, setIsLoadingArt] = useState(true);
   const [isLoadingGames, setIsLoadingGames] = useState(true);
+  const [userProfilePic, setUserProfilePic] = useState(null);
 
   // const isLoggedIn = !!localStorage.getItem('token');
   const isLoggedIn = true; // Temporarily set to true for testing
@@ -87,6 +91,31 @@ const Landing = () => {
     fetchLatestArt();
   }, []);
 
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
+
   // Fetch latest 6 game videos for thumbnail
   useEffect(() => {
     const fetchLatestGames = async () => {
@@ -128,10 +157,17 @@ const Landing = () => {
         <nav className="landing-navbar">
           {isLoggedIn ? (
             <>
-              <button onClick={handleLogout} className="landing-logout-btn">Logout</button>
               <div className="landing-profile-dropdown" ref={dropdownRef}>
                 <button onClick={handleProfileClick} className="landing-profile-btn">
-                  Profile ▼
+                  {userProfilePic ? (
+                    <img
+                      src={userProfilePic}
+                      alt="Profile Picture"
+                      className="landing-profile-pic"
+                    />
+                  ) : (
+                    <div className="landing-profile-pic-placeholder">Profile</div>
+                  )}
                 </button>
                 {showProfileDropdown && (
                   <div className="landing-dropdown-menu">
