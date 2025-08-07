@@ -14,6 +14,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [isLoadingArt, setIsLoadingArt] = useState(true);
   const [isLoadingGames, setIsLoadingGames] = useState(true);
@@ -25,7 +26,9 @@ const Profile = () => {
   const [tempProfilePicImage, setTempProfilePicImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [recentMessages, setRecentMessages] = useState([]);
   const dropdownRef = useRef(null);
+  const notificationRef = useRef(null);
   const popupRef = useRef(null);
 
   const [userData, setUserData] = useState({
@@ -142,11 +145,49 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Close dropdown when clicking outside
+  // Fetch recent messages for notifications
+  useEffect(() => {
+    const fetchRecentMessages = async () => {
+      try {
+        if (!user) {
+          return;
+        }
+
+        // Fetch recent conversations to get the last 3 users who messaged
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/messages/conversations`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const conversations = await response.json();
+          
+          // Get the first 3 unique users from conversations
+          const uniqueUsers = conversations.slice(0, 3).map(conv => ({
+            id: conv.other_user_id,
+            username: conv.other_user_name
+          }));
+          
+          setRecentMessages(uniqueUsers);
+        }
+      } catch (error) {
+        console.error('Error fetching recent messages:', error);
+      }
+    };
+
+    fetchRecentMessages();
+  }, [user]);
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowProfileDropdown(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotificationDropdown(false);
       }
     };
 
@@ -184,6 +225,15 @@ const Profile = () => {
 
   const handleProfileClick = () => {
     setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleNotificationClick = () => {
+    setShowNotificationDropdown(!showNotificationDropdown);
+  };
+
+  const handleNotificationItemClick = (userId) => {
+    setShowNotificationDropdown(false);
+    navigate(`/direct-message/${userId}`);
   };
 
   const handleDropdownItemClick = (route) => {
@@ -393,7 +443,35 @@ const Profile = () => {
             onClick={handleExploreClick}
           ></div>
           {/* <div className="profile-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
-          <div className="profile-icon bell" title="Notifications"></div>
+          <div className="profile-notification-dropdown" ref={notificationRef}>
+            <div 
+              className="profile-icon bell" 
+              title="Notifications"
+              onClick={handleNotificationClick}
+            ></div>
+            {showNotificationDropdown && (
+              <div className="profile-notification-menu">
+                <div className="profile-notification-header">
+                  Recent Messages
+                </div>
+                {recentMessages.length > 0 ? (
+                  recentMessages.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleNotificationItemClick(user.id)}
+                      className="profile-notification-item"
+                    >
+                      {user.username}
+                    </button>
+                  ))
+                ) : (
+                  <div className="profile-notification-empty">
+                    No recent messages
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="profile-profile-dropdown" ref={dropdownRef}>
             <button
               onClick={handleProfileClick}
