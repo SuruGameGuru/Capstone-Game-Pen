@@ -360,7 +360,15 @@ const Profile = () => {
               onClick={handleProfileClick}
               className="profile-profile-btn"
             >
-              Profile ▼
+              {userData.profilePic ? (
+                <img
+                  src={userData.profilePic}
+                  alt="Profile Picture"
+                  className="profile-profile-pic"
+                />
+              ) : (
+                <div className="profile-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="profile-dropdown-menu">
