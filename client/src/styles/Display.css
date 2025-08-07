@@ -104,8 +104,8 @@ body, html {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.display-icon.upload::before { content: "📤"; }
-.display-icon.file::before { content: "📁"; }
+.display-icon.upload::before { content: "➕"; }
+.display-icon.file::before { content: "🌐"; }
 .display-icon.drafts::before { content: "📝"; }
 .display-icon.bell::before { content: "🔔"; }
 
