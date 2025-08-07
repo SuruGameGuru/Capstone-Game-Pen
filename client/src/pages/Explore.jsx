@@ -238,8 +238,6 @@ const Explore = () => {
         </div>
         
         <nav className="explore-navbar">
-          <Link to="/">Home</Link>
-          <Link to="/upload">Upload</Link>
           <div className="explore-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="explore-profile-btn">
               {userProfilePic ? (
@@ -268,6 +266,12 @@ const Explore = () => {
                   className="explore-dropdown-item"
                 >
                   Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/friends')}
+                  className="explore-dropdown-item"
+                >
+                  Friends
                 </button>
                 {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}

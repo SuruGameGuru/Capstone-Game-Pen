@@ -394,6 +394,12 @@ const Display = () => {
                   >
                     Upload Content
                   </button>
+                  <button 
+                    onClick={() => handleDropdownItemClick('/friends')}
+                    className="display-dropdown-item"
+                  >
+                    Friends
+                  </button>
                   {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
                     className="display-dropdown-item"
@@ -468,6 +474,12 @@ const Display = () => {
                     className="display-dropdown-item"
                   >
                     Upload Content
+                  </button>
+                  <button 
+                    onClick={() => handleDropdownItemClick('/friends')}
+                    className="display-dropdown-item"
+                  >
+                    Friends
                   </button>
                   {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
@@ -547,6 +559,12 @@ const Display = () => {
                   className="display-dropdown-item"
                 >
                   Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/friends')}
+                  className="display-dropdown-item"
+                >
+                  Friends
                 </button>
                 {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}

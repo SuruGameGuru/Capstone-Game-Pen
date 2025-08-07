@@ -114,38 +114,66 @@ body, html {
 }
 
 .friends-profile-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
+  background: none;
   color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
+  border: none;
+  padding: 0;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 16px;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.2s ease;
+  transition: all 0.2s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .friends-profile-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.friends-profile-pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.friends-profile-pic-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
 }
 
 .friends-dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  background: #2a2a2a;
-  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 8px 0;
   min-width: 200px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 1001;
+  z-index: 1000;
+  margin-top: 8px;
 }
 
 .friends-dropdown-username {
   padding: 8px 16px;
-  color: #6366f1;
-  font-weight: 600;
-  border-bottom: 1px solid #333;
+  color: white;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 4px;
 }
 
@@ -158,8 +186,8 @@ body, html {
   color: white;
   text-align: left;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s;
+  font-size: 14px;
 }
 
 .friends-dropdown-item:hover {
@@ -168,7 +196,7 @@ body, html {
 
 .friends-dropdown-divider {
   height: 1px;
-  background: #333;
+  background: rgba(255, 255, 255, 0.1);
   margin: 4px 0;
 }
 

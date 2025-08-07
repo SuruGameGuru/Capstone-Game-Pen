@@ -1,21 +1,51 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import { profileService } from '../services/profileService';
 import '../styles/Friends.css';
 
 const Friends = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
   const [friends, setFriends] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userProfilePic, setUserProfilePic] = useState(null);
   const dropdownRef = useRef(null);
 
-  // Mock user data (replace with real auth when implemented)
-  const currentUser = {
-    id: 1,
-    username: 'TestUser'
-  };
+  const [userData, setUserData] = useState({
+    username: user?.username || 'User Name'
+  });
+
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+        setUserData({
+          username: profileData.username || user.username || 'User Name'
+        });
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   useEffect(() => {
     fetchFriends();
@@ -38,7 +68,8 @@ const Friends = () => {
 
   const fetchFriends = async () => {
     try {
-      const response = await fetch(`/api/friends/${currentUser.id}`);
+      if (!user) return;
+      const response = await fetch(`/api/friends/${user.id}`);
       if (response.ok) {
         const friendsData = await response.json();
         setFriends(friendsData);
@@ -52,7 +83,8 @@ const Friends = () => {
 
   const fetchPendingRequests = async () => {
     try {
-      const response = await fetch(`/api/friends/${currentUser.id}/requests`);
+      if (!user) return;
+      const response = await fetch(`/api/friends/${user.id}/requests`);
       if (response.ok) {
         const requestsData = await response.json();
         setPendingRequests(requestsData);
@@ -64,6 +96,7 @@ const Friends = () => {
 
   const handleAcceptRequest = async (requestId) => {
     try {
+      if (!user) return;
       const response = await fetch('/api/friends/accept', {
         method: 'POST',
         headers: {
@@ -71,7 +104,7 @@ const Friends = () => {
         },
         body: JSON.stringify({
           requestId,
-          userId: currentUser.id
+          userId: user.id
         }),
       });
 
@@ -86,6 +119,7 @@ const Friends = () => {
 
   const handleRejectRequest = async (requestId) => {
     try {
+      if (!user) return;
       const response = await fetch('/api/friends/reject', {
         method: 'POST',
         headers: {
@@ -93,7 +127,7 @@ const Friends = () => {
         },
         body: JSON.stringify({
           requestId,
-          userId: currentUser.id
+          userId: user.id
         }),
       });
 
@@ -107,7 +141,8 @@ const Friends = () => {
 
   const handleRemoveFriend = async (friendId) => {
     try {
-      const response = await fetch(`/api/friends/${currentUser.id}/${friendId}`, {
+      if (!user) return;
+      const response = await fetch(`/api/friends/${user.id}/${friendId}`, {
         method: 'DELETE',
       });
 
@@ -139,15 +174,7 @@ const Friends = () => {
 
   const handleLogout = () => {
     setShowProfileDropdown(false);
-    navigate('/login');
-  };
-
-  const handleUploadClick = () => {
-    navigate('/upload');
-  };
-
-  const handleExploreClick = () => {
-    navigate('/explore');
+    navigate('/');
   };
 
   // const handleDraftsClick = () => {
@@ -177,19 +204,16 @@ const Friends = () => {
           </div>
           
           <div className="friends-icons">
-            <div className="friends-icon upload" title="Upload" onClick={handleUploadClick}></div>
-            <div className="friends-icon file" title="Explore" onClick={handleExploreClick}></div>
-            {/* <div className="friends-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
             <div className="friends-icon bell" title="Notifications"></div>
             <div className="friends-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="friends-profile-btn">
                 Profile ▼
               </button>
-              {showProfileDropdown && (
-                <div className="friends-dropdown-menu">
-                  <div className="friends-dropdown-username">
-                    {currentUser.username}
-                  </div>
+                          {showProfileDropdown && (
+              <div className="friends-dropdown-menu">
+                <div className="friends-dropdown-username">
+                  {userData.username}
+                </div>
                   <button 
                     onClick={() => handleDropdownItemClick('/profile')}
                     className="friends-dropdown-item"
@@ -250,18 +274,23 @@ const Friends = () => {
         </div>
         
         <div className="friends-icons">
-          <div className="friends-icon upload" title="Upload" onClick={handleUploadClick}></div>
-          <div className="friends-icon file" title="Explore" onClick={handleExploreClick}></div>
-          {/* <div className="friends-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="friends-icon bell" title="Notifications"></div>
           <div className="friends-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="friends-profile-btn">
-              Profile ▼
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="friends-profile-pic"
+                />
+              ) : (
+                <div className="friends-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="friends-dropdown-menu">
                 <div className="friends-dropdown-username">
-                  {currentUser.username}
+                  {userData.username}
                 </div>
                 <button 
                   onClick={() => handleDropdownItemClick('/profile')}

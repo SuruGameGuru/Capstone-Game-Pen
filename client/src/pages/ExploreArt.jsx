@@ -228,6 +228,12 @@ const ExploreArt = () => {
                 >
                   Upload Content
                 </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/friends')}
+                  className="explore-dropdown-item"
+                >
+                  Friends
+                </button>
                 <div className="explore-dropdown-divider"></div>
                 <button 
                   onClick={handleLogout}
