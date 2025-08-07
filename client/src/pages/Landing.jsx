@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { imageService } from '../services/imageService';
+import { videoService } from '../services/videoService';
 import DominantColorThumbnail from '../components/DominantColorThumbnail';
 import '../styles/Landing.css';
 
@@ -23,8 +24,10 @@ const Landing = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  const [latestArtImage, setLatestArtImage] = useState(null);
+  const [latestArtImages, setLatestArtImages] = useState([]);
+  const [latestGameVideos, setLatestGameVideos] = useState([]);
   const [isLoadingArt, setIsLoadingArt] = useState(true);
+  const [isLoadingGames, setIsLoadingGames] = useState(true);
 
   // const isLoggedIn = !!localStorage.getItem('token');
   const isLoggedIn = true; // Temporarily set to true for testing
@@ -58,28 +61,56 @@ const Landing = () => {
     };
   }, []);
 
-  // Fetch latest art image for thumbnail
+  // Fetch latest 5 art images for thumbnail
   useEffect(() => {
     const fetchLatestArt = async () => {
       try {
         console.log('Landing: Fetching latest art...');
         setIsLoadingArt(true);
-        const artImages = await imageService.getLatestArt(1);
+        const artImages = await imageService.getLatestArt(5);
         console.log('Landing: Latest art images:', artImages);
         if (artImages.length > 0) {
-          console.log('Landing: Setting latest art image:', artImages[0]);
-          setLatestArtImage(artImages[0]);
+          console.log('Landing: Setting latest art images:', artImages);
+          setLatestArtImages(artImages);
         } else {
           console.log('Landing: No art images found');
+          setLatestArtImages([]);
         }
       } catch (error) {
         console.error('Error fetching latest art:', error);
+        setLatestArtImages([]);
       } finally {
         setIsLoadingArt(false);
       }
     };
 
     fetchLatestArt();
+  }, []);
+
+  // Fetch latest 5 game videos for thumbnail
+  useEffect(() => {
+    const fetchLatestGames = async () => {
+      try {
+        console.log('Landing: Fetching latest games...');
+        setIsLoadingGames(true);
+        const gameVideos = await videoService.getLatestVideos(5);
+        console.log('Landing: Latest game videos:', gameVideos);
+        if (gameVideos.length > 0) {
+          console.log('Landing: Setting latest game videos:', gameVideos);
+          setLatestGameVideos(gameVideos);
+        } else {
+          console.log('Landing: No game videos found');
+          setLatestGameVideos([]);
+        }
+      } catch (error) {
+        console.error('Error fetching latest games:', error);
+        setLatestGameVideos([]);
+      } finally {
+        setIsLoadingGames(false);
+      }
+    };
+
+    fetchLatestGames();
   }, []);
 
   return (
@@ -164,49 +195,82 @@ const Landing = () => {
       </aside>
       {/* Main Content Area */}
       <main className="landing-content">
+        {/* Game Demos Glass Button */}
         <div
-          className="landing-content-box landing-game-demos"
+          className="landing-glass-btn landing-game-demos-btn"
           onClick={() => navigate('/explore/games')}
         >
-          Game Demos
+          <div className="landing-glass-btn-title">
+            Game Demos
+          </div>
+          <div className="landing-thumbnails-scroll-container">
+            {isLoadingGames ? (
+              <div className="landing-thumbnails-loading">Loading...</div>
+            ) : latestGameVideos.length > 0 ? (
+              latestGameVideos.map((gameVideo, index) => (
+                <button
+                  key={gameVideo.id || index}
+                  className="landing-thumbnail-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/explore/games');
+                  }}
+                >
+                  <img
+                    src={gameVideo.thumbnail_url || gameVideo.url}
+                    alt={gameVideo.description || `Game ${index + 1}`}
+                    className="landing-thumbnail-img"
+                  />
+                </button>
+              ))
+            ) : (
+              <div className="landing-thumbnails-placeholder">
+                <img
+                  src="https://via.placeholder.com/80x80.png?text=Games"
+                  alt="Game Placeholder"
+                  className="landing-thumbnail-img"
+                />
+              </div>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 'bold', color: '#000' }}>
+
+        {/* Art Glass Button */}
+        <div
+          className="landing-glass-btn landing-art-btn"
+          onClick={() => navigate('/explore/art')}
+        >
+          <div className="landing-glass-btn-title">
             ART
           </div>
-          <div
-            className="landing-content-box landing-art-section"
-            onClick={() => navigate('/explore/art')}
-          >
+          <div className="landing-thumbnails-scroll-container">
             {isLoadingArt ? (
-              <div 
-                className="landing-art-thumbnail"
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  borderRadius: '1rem', 
-                  backgroundColor: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#666'
-                }}
-              >
-                Loading...
-              </div>
-            ) : latestArtImage ? (
-              <DominantColorThumbnail 
-                imageUrl={latestArtImage.url}
-                alt={latestArtImage.description || "Latest Art"}
-                className="landing-art-thumbnail"
-              />
+              <div className="landing-thumbnails-loading">Loading...</div>
+            ) : latestArtImages.length > 0 ? (
+              latestArtImages.map((artImage, index) => (
+                <button
+                  key={artImage.id || index}
+                  className="landing-thumbnail-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/explore/art');
+                  }}
+                >
+                  <DominantColorThumbnail 
+                    imageUrl={artImage.url}
+                    alt={artImage.description || `Art ${index + 1}`}
+                    className="landing-thumbnail-img"
+                  />
+                </button>
+              ))
             ) : (
-              <img
-                src="https://via.placeholder.com/120x120.png?text=Latest+Art"
-                alt="Latest Art Thumbnail"
-                className="landing-art-thumbnail"
-                style={{ width: '100%', height: '100%', borderRadius: '1rem', objectFit: 'cover' }}
-              />
+              <div className="landing-thumbnails-placeholder">
+                <img
+                  src="https://via.placeholder.com/80x80.png?text=Art"
+                  alt="Art Placeholder"
+                  className="landing-thumbnail-img"
+                />
+              </div>
             )}
           </div>
         </div>
