@@ -353,16 +353,19 @@ body, html {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   min-width: 200px;
   text-align: center;
-  /* Make glass button the same size as original content boxes */
-  height: 40vh;
-  min-height: 200px;
-  max-height: 400px;
+  /* Return to original smaller size */
+  height: 200px;
+  min-height: 150px;
+  max-height: 250px;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   margin: 0;
+  /* Ensure the button doesn't expand beyond its container */
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .landing-glass-btn:hover {
@@ -391,6 +394,9 @@ body, html {
   flex: 1;
   align-items: center;
   justify-content: flex-start;
+  /* Ensure the scroll container stays within the glass button */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .landing-thumbnails-scroll-container::-webkit-scrollbar {
@@ -418,10 +424,10 @@ body, html {
   justify-content: center;
   font-weight: bold;
   color: #000;
-  /* Make both boxes the same size and scale with viewport */
-  height: 40vh;
-  min-height: 200px;
-  max-height: 400px;
+  /* Return to original smaller size */
+  height: 200px;
+  min-height: 150px;
+  max-height: 250px;
   font-size: clamp(20px, 3vw, 32px);
   /* Add hover effect with thin blue border */
   border: 2px solid transparent;

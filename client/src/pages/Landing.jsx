@@ -61,13 +61,13 @@ const Landing = () => {
     };
   }, []);
 
-  // Fetch latest 5 art images for thumbnail
+  // Fetch latest 6 art images for thumbnail
   useEffect(() => {
     const fetchLatestArt = async () => {
       try {
         console.log('Landing: Fetching latest art...');
         setIsLoadingArt(true);
-        const artImages = await imageService.getLatestArt(5);
+        const artImages = await imageService.getLatestArt(6);
         console.log('Landing: Latest art images:', artImages);
         if (artImages.length > 0) {
           console.log('Landing: Setting latest art images:', artImages);
@@ -87,13 +87,13 @@ const Landing = () => {
     fetchLatestArt();
   }, []);
 
-  // Fetch latest 5 game videos for thumbnail
+  // Fetch latest 6 game videos for thumbnail
   useEffect(() => {
     const fetchLatestGames = async () => {
       try {
         console.log('Landing: Fetching latest games...');
         setIsLoadingGames(true);
-        const gameVideos = await videoService.getLatestVideos(5);
+        const gameVideos = await videoService.getLatestVideos(6);
         console.log('Landing: Latest game videos:', gameVideos);
         if (gameVideos.length > 0) {
           console.log('Landing: Setting latest game videos:', gameVideos);
