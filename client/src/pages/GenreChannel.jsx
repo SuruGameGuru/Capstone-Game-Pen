@@ -1,39 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import { profileService } from '../services/profileService';
 import GenreChannel from '../components/GenreChannel';
 import '../styles/GenreChannel.css';
 
 const GenreChannelPage = () => {
   const { genre } = useParams();
+  const { user } = useUser();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [userInfo, setUserInfo] = useState({
-    username: 'Anonymous',
-    userId: 'temp-user-id'
+  const [userProfilePic, setUserProfilePic] = useState(null);
+  const dropdownRef = useRef(null);
+
+  const [userData, setUserData] = useState({
+    username: user?.username || 'User Name'
   });
 
+  // Load user profile picture
   useEffect(() => {
-    // Get user info from localStorage or context
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Decode JWT token to get user info
+    const loadUserProfile = async () => {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUserInfo({
-          username: payload.username || 'Anonymous',
-          userId: payload.id || 'temp-user-id'
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+        setUserData({
+          username: profileData.username || user.username || 'User Name'
         });
       } catch (error) {
-        console.error('Error decoding token:', error);
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
       }
-    }
-  }, []);
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.genre-profile-dropdown')) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowProfileDropdown(false);
       }
     };
@@ -58,8 +74,8 @@ const GenreChannelPage = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+    setShowProfileDropdown(false);
+    navigate('/');
   };
 
   const handleUploadClick = () => {
@@ -101,14 +117,22 @@ const GenreChannelPage = () => {
           <div className="genre-icon file" title="Explore" onClick={handleExploreClick}></div>
           {/* <div className="genre-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
           <div className="genre-icon bell" title="Notifications"></div>
-          <div className="genre-profile-dropdown">
+          <div className="genre-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="genre-profile-btn">
-              Profile ▼
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="genre-profile-pic"
+                />
+              ) : (
+                <div className="genre-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="genre-dropdown-menu">
                 <div className="genre-dropdown-username">
-                  {userInfo.username}
+                  {userData.username}
                 </div>
                 <button 
                   onClick={() => handleDropdownItemClick('/profile')}
@@ -123,10 +147,10 @@ const GenreChannelPage = () => {
                   Upload Content
                 </button>
                 <button 
-                  onClick={() => handleDropdownItemClick('/drafts')}
+                  onClick={() => handleDropdownItemClick('/friends')}
                   className="genre-dropdown-item"
                 >
-                  My Drafts
+                  Friends
                 </button>
                 <div className="genre-dropdown-divider"></div>
                 <button 
@@ -144,8 +168,8 @@ const GenreChannelPage = () => {
       {/* Chat Component */}
       <GenreChannel 
         genre={genre}
-        username={userInfo.username}
-        userId={userInfo.userId}
+        username={userData.username}
+        userId={user?.id || 'temp-user-id'}
       />
     </div>
   );

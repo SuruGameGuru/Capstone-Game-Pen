@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import chatService from '../services/chatService';
+import { profileService } from '../services/profileService';
 import UserPopup from './UserPopup';
 import '../styles/GenreChannel.css';
 
@@ -11,6 +12,7 @@ const GenreChannel = ({ genre, username, userId }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserPopup, setShowUserPopup] = useState(false);
+  const [userProfilePics, setUserProfilePics] = useState({});
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -21,7 +23,11 @@ const GenreChannel = ({ genre, username, userId }) => {
 
   const handleUserJoined = useCallback((userData) => {
     setOnlineUsers(prev => new Set([...prev, userData.username]));
-  }, []);
+    // Fetch profile picture for the new user
+    if (userData.username && userData.username !== username) {
+      fetchUserProfilePic(userData.username);
+    }
+  }, [username]);
 
   const handleUserLeft = useCallback((userData) => {
     setOnlineUsers(prev => {
@@ -35,6 +41,13 @@ const GenreChannel = ({ genre, username, userId }) => {
     if (data.genre === genre) {
       const userList = data.users.map(user => user.username);
       setOnlineUsers(new Set([...userList, username])); // Include current user
+      
+      // Fetch profile pictures for all users
+      userList.forEach(userUsername => {
+        if (userUsername !== username) {
+          fetchUserProfilePic(userUsername);
+        }
+      });
     }
   }, [genre, username]);
 
@@ -83,6 +96,42 @@ const GenreChannel = ({ genre, username, userId }) => {
   const handleCloseUserPopup = () => {
     setShowUserPopup(false);
     setSelectedUser(null);
+  };
+
+  // Fetch profile picture for a user
+  const fetchUserProfilePic = async (username) => {
+    try {
+      // This would need to be implemented based on your backend API
+      // For now, we'll use a placeholder approach
+      const profileData = await profileService.getUserProfileByUsername(username);
+      if (profileData && profileData.profilePicture) {
+        setUserProfilePics(prev => ({
+          ...prev,
+          [username]: profileData.profilePicture
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching profile picture for', username, ':', error);
+    }
+  };
+
+  // Get user avatar (profile pic or initial)
+  const getUserAvatar = (username) => {
+    const profilePic = userProfilePics[username];
+    if (profilePic) {
+      return (
+        <img 
+          src={profilePic} 
+          alt={`${username}'s profile`} 
+          className="user-avatar-img"
+        />
+      );
+    }
+    return (
+      <div className="user-avatar-initial">
+        {username.charAt(0).toUpperCase()}
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -187,7 +236,7 @@ const GenreChannel = ({ genre, username, userId }) => {
               style={{ cursor: user === username ? 'default' : 'pointer' }}
             >
               <div className="user-avatar">
-                {user.charAt(0).toUpperCase()}
+                {getUserAvatar(user)}
               </div>
               <span className="user-name">{user}</span>
               {user === username && <span className="current-user-indicator">(You)</span>}
