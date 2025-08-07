@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
+import { videoService } from '../services/videoService';
 import { profileService } from '../services/profileService';
 import authService from '../services/authService';
 import DominantColorThumbnail from '../components/DominantColorThumbnail';
@@ -15,7 +16,9 @@ const Profile = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [isLoadingArt, setIsLoadingArt] = useState(true);
+  const [isLoadingGames, setIsLoadingGames] = useState(true);
   const [latestArtImage, setLatestArtImage] = useState(null);
+  const [latestGameVideo, setLatestGameVideo] = useState(null);
   const [showBannerCropper, setShowBannerCropper] = useState(false);
   const [showProfilePicCropper, setShowProfilePicCropper] = useState(false);
   const [tempBannerImage, setTempBannerImage] = useState(null);
@@ -65,6 +68,42 @@ const Profile = () => {
     };
 
     fetchLatestArt();
+  }, [user]);
+
+  // Fetch latest game demo for profile game button thumbnail
+  useEffect(() => {
+    const fetchLatestGame = async () => {
+      try {
+        setIsLoadingGames(true);
+        if (!user) {
+          setIsLoadingGames(false);
+          return;
+        }
+
+        // Fetch only the current user's latest game demo
+        const gameVideos = await videoService.getUserVideos(user.id, false);
+        
+        if (gameVideos.length > 0) {
+          setLatestGameVideo(gameVideos[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching latest game demo:', error);
+      } finally {
+        setIsLoadingGames(false);
+      }
+    };
+
+    fetchLatestGame();
+
+    // Refetch game videos when page gains focus (user returns from upload page)
+    const handleFocus = () => {
+      fetchLatestGame();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [user]);
 
   // Load user profile data
@@ -453,7 +492,45 @@ const Profile = () => {
         >
           <h2 className="profile-content-title">User Game Demos</h2>
           <div className="profile-content-placeholder">
-            Your game demos will appear here
+            {isLoadingGames ? (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666',
+                  borderRadius: '1rem',
+                }}
+              >
+                Loading...
+              </div>
+            ) : latestGameVideo ? (
+              <video
+                src={latestGameVideo.url}
+                className="profile-game-thumbnail"
+                muted
+                preload="metadata"
+                onLoadedData={(e) => {
+                  // Seek to 2nd frame (0.1 seconds) for thumbnail
+                  e.target.currentTime = 0.1;
+                }}
+                onSeeked={(e) => {
+                  // Pause at the 2nd frame
+                  e.target.pause();
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '1rem',
+                }}
+              />
+            ) : (
+              <div>Your game demos will appear here</div>
+            )}
           </div>
         </div>
 
@@ -486,9 +563,7 @@ const Profile = () => {
                 className="profile-art-thumbnail"
               />
             ) : (
-              <div className="profile-content-placeholder">
-                Your art files will appear here
-              </div>
+              <div>Your art files will appear here</div>
             )}
           </div>
         </div>

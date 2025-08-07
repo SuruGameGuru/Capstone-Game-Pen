@@ -50,7 +50,7 @@ const MyGames = () => {
     navigate('/');
   };
 
-  // Fetch user's videos on component mount
+  // Fetch user's videos on component mount and when page gains focus
   useEffect(() => {
     const fetchUserVideos = async () => {
       if (!user?.id) return;
@@ -67,6 +67,16 @@ const MyGames = () => {
     };
 
     fetchUserVideos();
+
+    // Refetch videos when page gains focus (user returns from upload page)
+    const handleFocus = () => {
+      fetchUserVideos();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [user?.id]);
 
   // Load user profile picture
