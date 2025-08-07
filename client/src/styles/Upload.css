@@ -324,16 +324,16 @@ body, html {
   backdrop-filter: blur(10px);
   border: 2px solid #C0C0C0;
   border-radius: 16px;
-  padding: 20px 40px;
+  padding: 25px 30px;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  min-width: 200px;
+  min-width: 280px;
   text-align: center;
-  /* Match Landing page glass button size */
-  height: 200px;
-  min-height: 150px;
-  max-height: 250px;
+  /* Make boxes bigger for better visibility */
+  height: 280px;
+  min-height: 250px;
+  max-height: 320px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -499,6 +499,7 @@ body, html {
   overflow-y: auto;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
   animation: popupSlideIn 0.3s ease-out;
+  color: #000000;
 }
 
 @keyframes popupSlideIn {
@@ -579,7 +580,7 @@ body, html {
 
 .popup-section h4 {
   margin: 0 0 16px 0;
-  color: #374151;
+  color: #000000;
   font-size: 18px;
   font-weight: 600;
 }
@@ -591,6 +592,7 @@ body, html {
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
+  color: #000000;
   resize: vertical;
   min-height: 80px;
   margin-bottom: 12px;
@@ -600,6 +602,13 @@ body, html {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.popup-section p {
+  color: #000000;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .popup-btn {

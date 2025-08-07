@@ -287,8 +287,6 @@ const MyArt = () => {
           />
         </div>
         <nav className="upload-navbar">
-          <Link to="/">Home</Link>
-          <Link to="/explore">Explore</Link>
           <div className="upload-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="upload-profile-btn">
               {userProfilePic ? (
@@ -317,6 +315,12 @@ const MyArt = () => {
                   className="upload-dropdown-item"
                 >
                   Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/explore')}
+                  className="upload-dropdown-item"
+                >
+                  Explore
                 </button>
                 {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
@@ -354,7 +358,7 @@ const MyArt = () => {
                     className="upload-box-thumbnail"
                     style={{
                       width: '100%',
-                      height: '120px',
+                      height: '160px',
                       objectFit: 'cover',
                       borderRadius: '1rem 1rem 0 0',
                       marginBottom: '0.5rem'
