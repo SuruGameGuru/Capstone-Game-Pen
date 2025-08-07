@@ -125,6 +125,12 @@ const Display = () => {
           await videoService.likeVideo(id);
           setLiked(true);
           setLikeCount(prev => prev + 1);
+          
+          // Backend will automatically remove dislike if it exists
+          if (disliked) {
+            setDisliked(false);
+            setDislikeCount(prev => prev - 1);
+          }
         }
       } else {
         if (liked) {

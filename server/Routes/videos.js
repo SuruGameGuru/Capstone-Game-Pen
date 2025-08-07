@@ -362,7 +362,7 @@ router.get('/:id/dislikes', async (req, res) => {
   }
 });
 
-// Delete video - WITH AUTHENTICATION (only video owner)
+// Delete video - WITH AUTHENTICATION (only video owner) - MUST BE LAST
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;

@@ -1,10 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
+import ImageUpload from '../components/ImageUpload';
 import '../styles/Upload.css';
+import '../styles/ImageUpload.css';
 
 const MyArt = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [artContent, setArtContent] = useState([]);
   const [filteredArtContent, setFilteredArtContent] = useState([]);
@@ -13,11 +17,26 @@ const MyArt = () => {
   const [selectedArt, setSelectedArt] = useState(null);
   const [editDescription, setEditDescription] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const dropdownRef = useRef(null);
 
+
+
   const [userData, setUserData] = useState({
-    username: 'User Name'
+    username: user?.username || 'User Name'
   });
+
+  // Debug: Log user context
+  useEffect(() => {
+    console.log('MyArt: User context updated:', user);
+    console.log('MyArt: User ID:', user?.id);
+    console.log('MyArt: User username:', user?.username);
+    setUserData({
+      username: user?.username || 'User Name'
+    });
+  }, [user]);
+
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -50,66 +69,74 @@ const MyArt = () => {
   // Fetch user's art from API
   useEffect(() => {
     const fetchUserArt = async () => {
+      console.log('MyArt: fetchUserArt called, user:', user);
+      if (!user?.id) {
+        console.log('MyArt: No user ID available');
+        return;
+      }
+      
       try {
         setIsLoading(true);
-        // For now, fetch all public art since we don't have user-specific filtering
-        const fetchedImages = await imageService.getImages({ 
-          is_public: true, 
+        console.log('MyArt: Fetching images for user ID:', user.id);
+        console.log('MyArt: API URL being used:', process.env.REACT_APP_API_URL || 'http://localhost:3001');
+        console.log('MyArt: Token available:', !!localStorage.getItem('token'));
+        
+        // Try different approaches to see what works
+        let fetchedImages = [];
+        
+        // First try: Get all user's images (like ExploreArt but with user_id)
+        console.log('MyArt: Making API call with user_id filter...');
+        fetchedImages = await imageService.getImages({ 
+          user_id: user.id,
           limit: 100 
         });
-        // Filter for art images
-        const artImages = fetchedImages.filter(img => 
-          img.genre?.toLowerCase() === 'art' || 
-          img.genre?.toLowerCase() === 'drawing' || 
-          img.genre?.toLowerCase() === 'painting'
-        );
+        
+        console.log('MyArt: Fetched images with user_id filter:', fetchedImages);
+        console.log('MyArt: Number of images found:', fetchedImages.length);
+        
+        // If no images found, try without user_id filter to see if any images exist
+        if (fetchedImages.length === 0) {
+          console.log('MyArt: No images found with user_id filter, trying without filter...');
+          const allImages = await imageService.getImages({ 
+            limit: 100 
+          });
+          console.log('MyArt: All images in database:', allImages);
+        }
+        
+        // For now, show all user images without genre filtering (like ExploreArt)
+        const artImages = fetchedImages;
+        
+        console.log('MyArt: Final art images to display:', artImages);
+        
         setArtContent(artImages);
         setFilteredArtContent(artImages);
       } catch (error) {
         console.error('Error fetching user art:', error);
-        // Fallback to sample data
-        const sampleArt = getSampleArtContent();
-        setArtContent(sampleArt);
-        setFilteredArtContent(sampleArt);
+        setArtContent([]);
+        setFilteredArtContent([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchUserArt();
-  }, []);
+  }, [user?.id]);
 
-  // Sample art content as fallback
-  const getSampleArtContent = () => [
-    {
-      id: 1,
-      title: 'Character Concept Art',
-      icon: '🎨',
-      description: 'Fantasy RPG character designs',
-      thumbnailUrl: 'https://res.cloudinary.com/demo/image/upload/sample.jpg'
-    },
-    {
-      id: 2,
-      title: 'Level Design Sketches',
-      icon: '🏗️',
-      description: 'Environmental concepts for game stages',
-      thumbnailUrl: 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'
-    }
-  ];
+
 
   // Filter art based on search term
   useEffect(() => {
-    if (artContent.length > 0) {
-      const filtered = artContent.filter(art => {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          (art.description && art.description.toLowerCase().includes(searchLower)) ||
-          (art.genre && art.genre.toLowerCase().includes(searchLower)) ||
-          (art.title && art.title.toLowerCase().includes(searchLower))
-        );
-      });
-      setFilteredArtContent(filtered);
-    }
+    const filtered = artContent.filter(art => {
+      if (!searchTerm.trim()) return true;
+      
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        (art.description && art.description.toLowerCase().includes(searchLower)) ||
+        (art.genre && art.genre.toLowerCase().includes(searchLower)) ||
+        (art.title && art.title.toLowerCase().includes(searchLower))
+      );
+    });
+    setFilteredArtContent(filtered);
   }, [searchTerm, artContent]);
 
   const handleSearch = (e) => {
@@ -123,11 +150,33 @@ const MyArt = () => {
   };
 
   const handleNewUpload = () => {
-    navigate('/upload');
+    setShowUploadModal(true);
+  };
+
+  const handleUploadSuccess = (data) => {
+    setShowUploadModal(false);
+    alert('Upload successful!');
+    
+    console.log('MyArt: Upload success data:', data);
+    
+    // Add the new image to the current list (like ExploreArt approach)
+    if (data && data.image) {
+      const newImage = data.image;
+      console.log('MyArt: Adding new image to list:', newImage);
+      setArtContent(prev => [newImage, ...prev]);
+      setFilteredArtContent(prev => [newImage, ...prev]);
+    }
+  };
+
+  const handleUploadError = (error) => {
+    alert(`Upload failed: ${error}`);
   };
 
   const handleEditDescription = async () => {
-    if (!selectedArt || !editDescription.trim()) return;
+    if (!selectedArt || !editDescription.trim()) {
+      alert('Please enter a description');
+      return;
+    }
     
     try {
       const result = await imageService.updateImage(selectedArt.id, {
@@ -135,22 +184,24 @@ const MyArt = () => {
       });
       
       // Update local state with the response from server
-      const updatedArt = result.image;
+      const updatedArt = result.image || result;
       setArtContent(prev => prev.map(art => art.id === selectedArt.id ? updatedArt : art));
+      setFilteredArtContent(prev => prev.map(art => art.id === selectedArt.id ? updatedArt : art));
       
       setShowPopup(false);
       setSelectedArt(null);
       setEditDescription('');
+      alert('Description updated successfully!');
     } catch (error) {
       console.error('Error updating description:', error);
-      alert('Failed to update description. Please try again.');
+      alert(`Failed to update description: ${error.message || 'Please try again.'}`);
     }
   };
 
   const handleCropImage = () => {
     // TODO: Implement image cropping functionality
     console.log('Crop image:', selectedArt.id);
-    alert('Image cropping feature coming soon!');
+    alert('Image cropping feature is planned for future updates. For now, you can edit the description or delete the image.');
   };
 
   const handleDeleteArt = async () => {
@@ -162,13 +213,15 @@ const MyArt = () => {
         
         // Remove from local state
         setArtContent(prev => prev.filter(art => art.id !== selectedArt.id));
+        setFilteredArtContent(prev => prev.filter(art => art.id !== selectedArt.id));
         
         setShowPopup(false);
         setSelectedArt(null);
         setEditDescription('');
+        alert('Artwork deleted successfully!');
       } catch (error) {
         console.error('Error deleting art:', error);
-        alert('Failed to delete artwork. Please try again.');
+        alert(`Failed to delete artwork: ${error.message || 'Please try again.'}`);
       }
     }
   };
@@ -330,6 +383,12 @@ const MyArt = () => {
                 </div>
               )}
               
+              <div className="popup-info">
+                <p><strong>Genre:</strong> {selectedArt.genre || 'Not specified'}</p>
+                <p><strong>Upload Date:</strong> {selectedArt.created_at ? new Date(selectedArt.created_at).toLocaleDateString() : 'Unknown'}</p>
+                <p><strong>Current Description:</strong> {selectedArt.description || 'No description'}</p>
+              </div>
+              
               <div className="popup-actions">
                 <div className="popup-section">
                   <h4>Edit Description</h4>
@@ -342,6 +401,7 @@ const MyArt = () => {
                   <button 
                     className="popup-btn popup-btn-primary"
                     onClick={handleEditDescription}
+                    disabled={!editDescription.trim()}
                   >
                     Save Description
                   </button>
@@ -364,6 +424,28 @@ const MyArt = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="upload-modal-overlay" onClick={() => setShowUploadModal(false)}>
+          <div className="upload-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="upload-modal-header">
+              <h2>Upload New Art</h2>
+              <button 
+                className="upload-modal-close"
+                onClick={() => setShowUploadModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <ImageUpload 
+              uploadType="art"
+              onUploadSuccess={handleUploadSuccess}
+              onUploadError={handleUploadError}
+            />
           </div>
         </div>
       )}

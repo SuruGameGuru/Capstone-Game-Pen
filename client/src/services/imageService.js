@@ -1,5 +1,5 @@
 // client/src/services/imageService.js
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 export const imageService = {
   // Get all images with optional filters
@@ -13,13 +13,30 @@ export const imageService = {
       if (filters.limit) queryParams.append('limit', filters.limit);
       if (filters.offset) queryParams.append('offset', filters.offset);
       
-      const response = await fetch(`${API_BASE_URL}/api/images?${queryParams}`);
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const url = `${API_BASE_URL}/api/images?${queryParams}`;
+      console.log('imageService: Making request to:', url);
+      console.log('imageService: Filters:', filters);
+      console.log('imageService: Headers:', headers);
+      
+      const response = await fetch(url, {
+        headers
+      });
+      
+      console.log('imageService: Response status:', response.status);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const data = await response.json();
+      console.log('imageService: Response data:', data);
+      return data;
     } catch (error) {
       console.error('Error fetching images:', error);
       return [];
@@ -216,10 +233,12 @@ export const imageService = {
   // Update image
   async updateImage(imageId, updateData) {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/images/${imageId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updateData),
       });
@@ -238,8 +257,12 @@ export const imageService = {
   // Delete an image
   async deleteImage(imageId) {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/images/${imageId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) {
