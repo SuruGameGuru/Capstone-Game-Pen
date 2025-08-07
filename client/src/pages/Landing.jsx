@@ -216,10 +216,19 @@ const Landing = () => {
                     navigate('/explore/games');
                   }}
                 >
-                  <img
-                    src={gameVideo.thumbnail_url || gameVideo.url}
-                    alt={gameVideo.description || `Game ${index + 1}`}
+                  <video
+                    src={gameVideo.url}
                     className="landing-thumbnail-img"
+                    muted
+                    preload="metadata"
+                    onLoadedData={(e) => {
+                      // Seek to 2nd frame (0.1 seconds) for thumbnail
+                      e.target.currentTime = 0.1;
+                    }}
+                    onSeeked={(e) => {
+                      // Pause at the 2nd frame
+                      e.target.pause();
+                    }}
                   />
                 </button>
               ))

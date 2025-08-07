@@ -295,8 +295,8 @@ body, html {
 }
 
 .landing-thumbnail-btn {
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   border: none;
   border-radius: 12px;
   overflow: hidden;
@@ -324,8 +324,8 @@ body, html {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   background: #f0f0f0;
   border-radius: 12px;
   color: #666;
@@ -334,8 +334,8 @@ body, html {
 }
 
 .landing-thumbnails-placeholder {
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -601,8 +601,8 @@ body, html {
   }
   
   .landing-thumbnail-btn {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
   }
   
   .landing-thumbnails-container {
@@ -658,8 +658,8 @@ body, html {
   }
   
   .landing-thumbnail-btn {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
   }
   
   .landing-thumbnails-container {
