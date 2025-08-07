@@ -34,21 +34,31 @@ body, html {
 }
 
 .profile-logo-title {
-  text-decoration: none;
-  color: #000;
-  font-size: 24px;
-  font-weight: bold;
   display: flex;
   align-items: center;
-  gap: 4px;
+  text-decoration: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.profile-logo-title:hover {
+  transform: scale(1.05);
 }
 
 .profile-logo-title .game {
-  color: #4f46e5;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .profile-logo-title .pen {
-  color: #000;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .profile-search {

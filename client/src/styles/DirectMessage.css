@@ -34,20 +34,31 @@ body, html {
 }
 
 .direct-message-logo-title {
-  text-decoration: none;
-  font-size: 1.8rem;
-  font-weight: bold;
   display: flex;
   align-items: center;
-  gap: 4px;
+  text-decoration: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.direct-message-logo-title:hover {
+  transform: scale(1.05);
 }
 
 .direct-message-logo-title .game {
-  color: #6366f1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .direct-message-logo-title .pen {
-  color: #8b5cf6;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .direct-message-search {

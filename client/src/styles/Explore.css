@@ -36,21 +36,29 @@ body, html {
 .explore-logo-title {
   display: flex;
   align-items: center;
+  text-decoration: none;
+  font-size: 1.5rem;
   font-weight: bold;
-  font-size: 36px;
-  text-transform: uppercase;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.explore-logo-title:hover {
+  transform: scale(1.05);
 }
 
 .explore-logo-title .game {
-  font-style: italic;
-  background: linear-gradient(45deg, #0066cc, #0099ff);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .explore-logo-title .pen {
-  color: #9933cc;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .explore-search {
