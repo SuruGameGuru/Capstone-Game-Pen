@@ -314,10 +314,48 @@ body, html {
 .landing-content {
   flex: 1;
   padding: 40px;
+  /* padding-bottom: 280px; */ /* Commented out - was for about section */
   display: flex;
   flex-direction: column;
   gap: 40px;
 }
+
+/* About Section - Commented out for presentation */
+/*
+.landing-about-section {
+  position: fixed;
+  left: calc(20% + 40px);
+  right: 0;
+  bottom: 0;
+  background: #000;
+  color: white;
+  padding: 40px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  z-index: 1;
+  min-height: 200px;
+}
+
+.landing-about-content {
+  max-width: 600px;
+}
+
+.landing-about-content h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.landing-about-content p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  color: white;
+  opacity: 0.9;
+}
+*/
 
 
 
@@ -665,6 +703,28 @@ body, html {
   .landing-art-scroll-container {
     gap: 0.5rem;
     padding: 0 0.5rem;
+  }
+
+  .landing-about-section {
+    position: relative;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: auto;
+    margin: 20px;
+    border-radius: 8px;
+  }
+
+  .landing-about-content {
+    max-width: 100%;
+  }
+
+  .landing-about-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .landing-about-content p {
+    font-size: 1rem;
   }
 }
 

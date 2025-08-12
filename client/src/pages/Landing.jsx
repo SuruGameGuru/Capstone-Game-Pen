@@ -320,6 +320,24 @@ const Landing = () => {
           </div>
         </div>
       </main>
+      
+      {/* About Section - Commented out for presentation */}
+      {/* <div className="landing-about-section">
+        <div className="landing-about-content">
+          <h2>About GamePen</h2>
+          <p>
+            GamePen is a creative platform where game developers and artists come together to share their work, 
+            collaborate on projects, and build a vibrant community. Whether you're showcasing game demos, 
+            sharing concept art, or connecting with fellow creators, GamePen provides the tools and space 
+            you need to bring your ideas to life.
+          </p>
+          <p>
+            Join our genre-specific chat channels to discuss your favorite game types, share tips and tricks, 
+            and find collaborators for your next big project. Upload your content, explore amazing creations 
+            from the community, and be part of the future of game development.
+          </p>
+        </div>
+      </div> */}
     </div>
   </div>
   );
