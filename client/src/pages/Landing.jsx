@@ -1,10 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
+import { videoService } from '../services/videoService';
+import { profileService } from '../services/profileService';
 import DominantColorThumbnail from '../components/DominantColorThumbnail';
 import '../styles/Landing.css';
 
 const Landing = () => {
+  const { user } = useUser();
   const genres = [
     'Action',
     'Adventure',
@@ -23,8 +27,11 @@ const Landing = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  const [latestArtImage, setLatestArtImage] = useState(null);
+  const [latestArtImages, setLatestArtImages] = useState([]);
+  const [latestGameVideos, setLatestGameVideos] = useState([]);
   const [isLoadingArt, setIsLoadingArt] = useState(true);
+  const [isLoadingGames, setIsLoadingGames] = useState(true);
+  const [userProfilePic, setUserProfilePic] = useState(null);
 
   // const isLoggedIn = !!localStorage.getItem('token');
   const isLoggedIn = true; // Temporarily set to true for testing
@@ -58,28 +65,81 @@ const Landing = () => {
     };
   }, []);
 
-  // Fetch latest art image for thumbnail
+  // Fetch latest 6 art images for thumbnail
   useEffect(() => {
     const fetchLatestArt = async () => {
       try {
         console.log('Landing: Fetching latest art...');
         setIsLoadingArt(true);
-        const artImages = await imageService.getLatestArt(1);
+        const artImages = await imageService.getLatestArt(6);
         console.log('Landing: Latest art images:', artImages);
         if (artImages.length > 0) {
-          console.log('Landing: Setting latest art image:', artImages[0]);
-          setLatestArtImage(artImages[0]);
+          console.log('Landing: Setting latest art images:', artImages);
+          setLatestArtImages(artImages);
         } else {
           console.log('Landing: No art images found');
+          setLatestArtImages([]);
         }
       } catch (error) {
         console.error('Error fetching latest art:', error);
+        setLatestArtImages([]);
       } finally {
         setIsLoadingArt(false);
       }
     };
 
     fetchLatestArt();
+  }, []);
+
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
+
+  // Fetch latest 6 game videos for thumbnail
+  useEffect(() => {
+    const fetchLatestGames = async () => {
+      try {
+        console.log('Landing: Fetching latest games...');
+        setIsLoadingGames(true);
+        const gameVideos = await videoService.getLatestVideos(6);
+        console.log('Landing: Latest game videos:', gameVideos);
+        if (gameVideos.length > 0) {
+          console.log('Landing: Setting latest game videos:', gameVideos);
+          setLatestGameVideos(gameVideos);
+        } else {
+          console.log('Landing: No game videos found');
+          setLatestGameVideos([]);
+        }
+      } catch (error) {
+        console.error('Error fetching latest games:', error);
+        setLatestGameVideos([]);
+      } finally {
+        setIsLoadingGames(false);
+      }
+    };
+
+    fetchLatestGames();
   }, []);
 
   return (
@@ -97,10 +157,17 @@ const Landing = () => {
         <nav className="landing-navbar">
           {isLoggedIn ? (
             <>
-              <button onClick={handleLogout} className="landing-logout-btn">Logout</button>
               <div className="landing-profile-dropdown" ref={dropdownRef}>
                 <button onClick={handleProfileClick} className="landing-profile-btn">
-                  Profile ▼
+                  {userProfilePic ? (
+                    <img
+                      src={userProfilePic}
+                      alt="Profile Picture"
+                      className="landing-profile-pic"
+                    />
+                  ) : (
+                    <div className="landing-profile-pic-placeholder">Profile</div>
+                  )}
                 </button>
                 {showProfileDropdown && (
                   <div className="landing-dropdown-menu">
@@ -164,53 +231,113 @@ const Landing = () => {
       </aside>
       {/* Main Content Area */}
       <main className="landing-content">
+        {/* Game Demos Glass Button */}
         <div
-          className="landing-content-box landing-game-demos"
+          className="landing-glass-btn landing-game-demos-btn"
           onClick={() => navigate('/explore/games')}
         >
-          Game Demos
+          <div className="landing-glass-btn-title">
+            Game Demos
+          </div>
+          <div className="landing-thumbnails-scroll-container">
+            {isLoadingGames ? (
+              <div className="landing-thumbnails-loading">Loading...</div>
+            ) : latestGameVideos.length > 0 ? (
+              latestGameVideos.map((gameVideo, index) => (
+                <button
+                  key={gameVideo.id || index}
+                  className="landing-thumbnail-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/explore/games');
+                  }}
+                >
+                  <video
+                    src={gameVideo.url}
+                    className="landing-thumbnail-img"
+                    muted
+                    preload="metadata"
+                    onLoadedData={(e) => {
+                      // Seek to 2nd frame (0.1 seconds) for thumbnail
+                      e.target.currentTime = 0.1;
+                    }}
+                    onSeeked={(e) => {
+                      // Pause at the 2nd frame
+                      e.target.pause();
+                    }}
+                  />
+                </button>
+              ))
+            ) : (
+              <div className="landing-thumbnails-placeholder">
+                <img
+                  src="https://via.placeholder.com/80x80.png?text=Games"
+                  alt="Game Placeholder"
+                  className="landing-thumbnail-img"
+                />
+              </div>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 'bold', color: '#000' }}>
+
+        {/* Art Glass Button */}
+        <div
+          className="landing-glass-btn landing-art-btn"
+          onClick={() => navigate('/explore/art')}
+        >
+          <div className="landing-glass-btn-title">
             ART
           </div>
-          <div
-            className="landing-content-box landing-art-section"
-            onClick={() => navigate('/explore/art')}
-          >
+          <div className="landing-thumbnails-scroll-container">
             {isLoadingArt ? (
-              <div 
-                className="landing-art-thumbnail"
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  borderRadius: '1rem', 
-                  backgroundColor: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#666'
-                }}
-              >
-                Loading...
-              </div>
-            ) : latestArtImage ? (
-              <DominantColorThumbnail 
-                imageUrl={latestArtImage.url}
-                alt={latestArtImage.description || "Latest Art"}
-                className="landing-art-thumbnail"
-              />
+              <div className="landing-thumbnails-loading">Loading...</div>
+            ) : latestArtImages.length > 0 ? (
+              latestArtImages.map((artImage, index) => (
+                <button
+                  key={artImage.id || index}
+                  className="landing-thumbnail-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/explore/art');
+                  }}
+                >
+                  <DominantColorThumbnail 
+                    imageUrl={artImage.url}
+                    alt={artImage.description || `Art ${index + 1}`}
+                    className="landing-thumbnail-img"
+                  />
+                </button>
+              ))
             ) : (
-              <img
-                src="https://via.placeholder.com/120x120.png?text=Latest+Art"
-                alt="Latest Art Thumbnail"
-                className="landing-art-thumbnail"
-                style={{ width: '100%', height: '100%', borderRadius: '1rem', objectFit: 'cover' }}
-              />
+              <div className="landing-thumbnails-placeholder">
+                <img
+                  src="https://via.placeholder.com/80x80.png?text=Art"
+                  alt="Art Placeholder"
+                  className="landing-thumbnail-img"
+                />
+              </div>
             )}
           </div>
         </div>
       </main>
+      
+      {/* About Section - Commented out for presentation */}
+      {/* <div className="landing-about-section">
+        <div className="landing-about-content">
+          <h2>About GamePen</h2>
+          <p>
+            GamePen is a creative platform where game developers and artists come together to share their work, 
+            collaborate on projects, and build a vibrant community. Whether you're showcasing game demos, 
+            sharing concept art, or connecting with fellow creators, GamePen provides the tools and space 
+            you need to bring your ideas to life.
+          </p>
+          <p>
+            Join our genre-specific chat channels to discuss your favorite game types, share tips and tricks, 
+            and find collaborators for your next big project. Upload your content, explore amazing creations 
+            from the community, and be part of the future of game development.
+          </p>
+        </div>
+      </div> */}
     </div>
   </div>
   );

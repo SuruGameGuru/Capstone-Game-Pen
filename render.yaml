@@ -2,8 +2,8 @@ services:
   - type: web
     name: gamepen-backend
     env: node
-    plan: free
-    buildCommand: npm install
+    plan: starter
+    buildCommand: npm install --legacy-peer-deps
     startCommand: node index.js
     rootDir: server
     envVars:
@@ -23,7 +23,7 @@ services:
   - type: web
     name: gamepen-frontend
     env: static
-    plan: free
+    plan: starter
     buildCommand: npm install && npm run build
     staticPublishPath: ./build
     rootDir: client

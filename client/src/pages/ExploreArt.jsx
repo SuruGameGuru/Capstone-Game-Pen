@@ -1,17 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
-import Logo from '../components/Logo';
+import { profileService } from '../services/profileService';
 import '../styles/ExploreArt.css';
 
 const ExploreArt = () => {
+  const { user } = useUser();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [displayCount, setDisplayCount] = useState(30);
   const [isLoading, setIsLoading] = useState(false);
   const [images, setImages] = useState([]);
   const [filteredImages, setFilteredImages] = useState([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const navigate = useNavigate();
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [userProfilePic, setUserProfilePic] = useState(null);
+  const dropdownRef = useRef(null);
+
+  const [userData, setUserData] = useState({
+    username: user?.username || 'User Name'
+  });
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+        setUserData({
+          username: profileData.username || user.username || 'User Name'
+        });
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   // Fetch art images from API
   useEffect(() => {
@@ -78,6 +129,20 @@ const ExploreArt = () => {
     }
   }, [searchTerm, images]);
 
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleDropdownItemClick = (route) => {
+    setShowProfileDropdown(false);
+    navigate(route);
+  };
+
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    navigate('/');
+  };
+
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -106,7 +171,10 @@ const ExploreArt = () => {
     return (
       <div className="explore-page">
         <header className="explore-header">
-          <Logo />
+          <Link to="/" className="explore-logo-title">
+            <span className="game">GAME</span>
+            <span className="pen">PEN</span>
+          </Link>
         </header>
         <div className="explore-loading">
           <div className="loading-spinner">Loading...</div>
@@ -118,7 +186,10 @@ const ExploreArt = () => {
   return (
     <div className="explore-page">
       <header className="explore-header">
-        <Logo />
+        <Link to="/" className="explore-logo-title">
+          <span className="game">GAME</span>
+          <span className="pen">PEN</span>
+        </Link>
         <div className="explore-search">
           <input
             type="text"
@@ -128,7 +199,51 @@ const ExploreArt = () => {
           />
         </div>
         <nav className="explore-navbar">
-          {/* Add navigation links as needed */}
+          <div className="explore-profile-dropdown" ref={dropdownRef}>
+            <button onClick={handleProfileClick} className="explore-profile-btn">
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="explore-profile-pic"
+                />
+              ) : (
+                <div className="explore-profile-pic-placeholder">Profile</div>
+              )}
+            </button>
+            {showProfileDropdown && (
+              <div className="explore-dropdown-menu">
+                <div className="explore-dropdown-username">
+                  {userData.username}
+                </div>
+                <button 
+                  onClick={() => handleDropdownItemClick('/profile')}
+                  className="explore-dropdown-item"
+                >
+                  My Profile
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/upload')}
+                  className="explore-dropdown-item"
+                >
+                  Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/friends')}
+                  className="explore-dropdown-item"
+                >
+                  Friends
+                </button>
+                <div className="explore-dropdown-divider"></div>
+                <button 
+                  onClick={handleLogout}
+                  className="explore-dropdown-item explore-dropdown-logout"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
       <main className="explore-main">

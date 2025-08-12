@@ -31,6 +31,33 @@ const profileService = {
     }
   },
 
+  // Get user profile by username
+  async getUserProfileByUsername(username) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile/username/${username}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.user;
+    } catch (error) {
+      console.error('Error fetching user profile by username:', error);
+      // Return default profile data if backend is not available
+      return {
+        username: username,
+        profilePicture: null
+      };
+    }
+  },
+
   // Update user profile
   async updateUserProfile(userId, profileData) {
     try {

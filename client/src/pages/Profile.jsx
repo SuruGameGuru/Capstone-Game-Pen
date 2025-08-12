@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
+import { videoService } from '../services/videoService';
 import { profileService } from '../services/profileService';
 import authService from '../services/authService';
 import DominantColorThumbnail from '../components/DominantColorThumbnail';
@@ -13,28 +14,33 @@ const Profile = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [isLoadingArt, setIsLoadingArt] = useState(true);
+  const [isLoadingGames, setIsLoadingGames] = useState(true);
   const [latestArtImage, setLatestArtImage] = useState(null);
+  const [latestGameVideo, setLatestGameVideo] = useState(null);
   const [showBannerCropper, setShowBannerCropper] = useState(false);
   const [showProfilePicCropper, setShowProfilePicCropper] = useState(false);
   const [tempBannerImage, setTempBannerImage] = useState(null);
   const [tempProfilePicImage, setTempProfilePicImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [recentMessages, setRecentMessages] = useState([]);
   const dropdownRef = useRef(null);
+  const notificationRef = useRef(null);
   const popupRef = useRef(null);
 
   const [userData, setUserData] = useState({
     username: 'User Name',
     profilePic: null,
-    bannerImage: null
+    bannerImage: null,
   });
 
   const [editData, setEditData] = useState({
     username: userData.username,
     profilePic: null,
-    bannerImage: null
+    bannerImage: null,
   });
 
   // Fetch latest art for profile art button thumbnail
@@ -42,7 +48,18 @@ const Profile = () => {
     const fetchLatestArt = async () => {
       try {
         setIsLoadingArt(true);
-        const artImages = await imageService.getLatestArt(1);
+        if (!user) {
+          setIsLoadingArt(false);
+          return;
+        }
+
+        // Fetch only the current user's latest art
+        const artImages = await imageService.getImages({
+          user_id: user.id,
+          limit: 1,
+          offset: 0,
+        });
+
         if (artImages.length > 0) {
           setLatestArtImage(artImages[0]);
         }
@@ -54,7 +71,43 @@ const Profile = () => {
     };
 
     fetchLatestArt();
-  }, []);
+  }, [user]);
+
+  // Fetch latest game demo for profile game button thumbnail
+  useEffect(() => {
+    const fetchLatestGame = async () => {
+      try {
+        setIsLoadingGames(true);
+        if (!user) {
+          setIsLoadingGames(false);
+          return;
+        }
+
+        // Fetch only the current user's latest game demo
+        const gameVideos = await videoService.getUserVideos(user.id, false);
+        
+        if (gameVideos.length > 0) {
+          setLatestGameVideo(gameVideos[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching latest game demo:', error);
+      } finally {
+        setIsLoadingGames(false);
+      }
+    };
+
+    fetchLatestGame();
+
+    // Refetch game videos when page gains focus (user returns from upload page)
+    const handleFocus = () => {
+      fetchLatestGame();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user]);
 
   // Load user profile data
   useEffect(() => {
@@ -64,17 +117,17 @@ const Profile = () => {
           console.log('No user logged in');
           return;
         }
-        
+
         const userId = user.id;
         console.log('Loading profile for user ID:', userId);
-        
+
         const profileData = await profileService.getUserProfile(userId);
         console.log('Profile data loaded:', profileData);
-        
+
         setUserData({
           username: profileData.username || user.username || 'User Name',
           profilePic: profileData.profilePicture || null,
-          bannerImage: profileData.bannerImage || null
+          bannerImage: profileData.bannerImage || null,
         });
       } catch (error) {
         console.error('Error loading user profile:', error);
@@ -82,7 +135,7 @@ const Profile = () => {
         setUserData({
           username: user?.username || 'User Name',
           profilePic: null,
-          bannerImage: null
+          bannerImage: null,
         });
       }
     };
@@ -92,11 +145,49 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Close dropdown when clicking outside
+  // Fetch recent messages for notifications
+  useEffect(() => {
+    const fetchRecentMessages = async () => {
+      try {
+        if (!user) {
+          return;
+        }
+
+        // Fetch recent conversations to get the last 3 users who messaged
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/messages/conversations`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const conversations = await response.json();
+          
+          // Get the first 3 unique users from conversations
+          const uniqueUsers = conversations.slice(0, 3).map(conv => ({
+            id: conv.other_user_id,
+            username: conv.other_user_name
+          }));
+          
+          setRecentMessages(uniqueUsers);
+        }
+      } catch (error) {
+        console.error('Error fetching recent messages:', error);
+      }
+    };
+
+    fetchRecentMessages();
+  }, [user]);
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowProfileDropdown(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotificationDropdown(false);
       }
     };
 
@@ -113,7 +204,7 @@ const Profile = () => {
       if (event.target.closest('.image-cropper-overlay')) {
         return;
       }
-      
+
       if (popupRef.current && !popupRef.current.contains(event.target)) {
         setShowEditPopup(false);
       }
@@ -136,6 +227,15 @@ const Profile = () => {
     setShowProfileDropdown(!showProfileDropdown);
   };
 
+  const handleNotificationClick = () => {
+    setShowNotificationDropdown(!showNotificationDropdown);
+  };
+
+  const handleNotificationItemClick = (userId) => {
+    setShowNotificationDropdown(false);
+    navigate(`/direct-message/${userId}`);
+  };
+
   const handleDropdownItemClick = (route) => {
     setShowProfileDropdown(false);
     navigate(route);
@@ -150,7 +250,7 @@ const Profile = () => {
     setEditData({
       username: userData.username,
       profilePic: userData.profilePic,
-      bannerImage: userData.bannerImage
+      bannerImage: userData.bannerImage,
     });
     setShowEditPopup(true);
   };
@@ -182,7 +282,7 @@ const Profile = () => {
   const handleBannerCrop = (croppedImageUrl) => {
     setEditData({
       ...editData,
-      bannerImage: croppedImageUrl
+      bannerImage: croppedImageUrl,
     });
     setShowBannerCropper(false);
     setTempBannerImage(null);
@@ -191,7 +291,7 @@ const Profile = () => {
   const handleProfilePicCrop = (croppedImageUrl) => {
     setEditData({
       ...editData,
-      profilePic: croppedImageUrl
+      profilePic: croppedImageUrl,
     });
     setShowProfilePicCropper(false);
     setTempProfilePicImage(null);
@@ -223,15 +323,21 @@ const Profile = () => {
 
       // Prepare profile data for update
       const profileData = {
-        username: editData.username
+        username: editData.username,
       };
 
       console.log('Profile data to save:', profileData);
 
       // If there are new images, upload them to Cloudinary first
-      if (editData.bannerImage && editData.bannerImage !== userData.bannerImage) {
+      if (
+        editData.bannerImage &&
+        editData.bannerImage !== userData.bannerImage
+      ) {
         try {
-          const bannerUrl = await profileService.uploadImageToCloudinary(editData.bannerImage, 'banners');
+          const bannerUrl = await profileService.uploadImageToCloudinary(
+            editData.bannerImage,
+            'banners'
+          );
           profileData.bannerImage = bannerUrl;
         } catch (error) {
           console.error('Failed to upload banner:', error);
@@ -242,7 +348,10 @@ const Profile = () => {
 
       if (editData.profilePic && editData.profilePic !== userData.profilePic) {
         try {
-          const profilePicUrl = await profileService.uploadImageToCloudinary(editData.profilePic, 'profile-pics');
+          const profilePicUrl = await profileService.uploadImageToCloudinary(
+            editData.profilePic,
+            'profile-pics'
+          );
           profileData.profilePicture = profilePicUrl;
         } catch (error) {
           console.error('Failed to upload profile picture:', error);
@@ -252,9 +361,12 @@ const Profile = () => {
       }
 
       console.log('Calling profileService.updateUserProfile...');
-      
+
       // Update profile in backend
-      const updatedUser = await profileService.updateUserProfile(userId, profileData);
+      const updatedUser = await profileService.updateUserProfile(
+        userId,
+        profileData
+      );
 
       console.log('Profile update response:', updatedUser);
 
@@ -262,14 +374,13 @@ const Profile = () => {
       setUserData({
         username: updatedUser.username,
         profilePic: updatedUser.profilePicture,
-        bannerImage: updatedUser.bannerImage
+        bannerImage: updatedUser.bannerImage,
       });
 
       setShowEditPopup(false);
-      
+
       // Show success message (you could add a toast notification here)
       alert('Profile updated successfully!');
-      
     } catch (error) {
       console.error('Error saving profile:', error);
       setSaveError('Failed to save profile. Please try again.');
@@ -310,7 +421,7 @@ const Profile = () => {
           <span className="game">GAME</span>
           <span className="pen">PEN</span>
         </Link>
-        
+
         <div className="profile-search">
           <input
             type="text"
@@ -319,28 +430,75 @@ const Profile = () => {
             onChange={handleSearch}
           />
         </div>
-        
+
         <div className="profile-icons">
-          <div className="profile-icon upload" title="Upload" onClick={handleUploadClick}></div>
-          <div className="profile-icon file" title="Explore" onClick={handleExploreClick}></div>
+          <div
+            className="profile-icon upload"
+            title="Upload"
+            onClick={handleUploadClick}
+          ></div>
+          <div
+            className="profile-icon file"
+            title="Explore"
+            onClick={handleExploreClick}
+          ></div>
           {/* <div className="profile-icon drafts" title="Drafts" onClick={handleDraftsClick}></div> */}
-          <div className="profile-icon bell" title="Notifications"></div>
+          <div className="profile-notification-dropdown" ref={notificationRef}>
+            <div 
+              className="profile-icon bell" 
+              title="Notifications"
+              onClick={handleNotificationClick}
+            ></div>
+            {showNotificationDropdown && (
+              <div className="profile-notification-menu">
+                <div className="profile-notification-header">
+                  Recent Messages
+                </div>
+                {recentMessages.length > 0 ? (
+                  recentMessages.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleNotificationItemClick(user.id)}
+                      className="profile-notification-item"
+                    >
+                      {user.username}
+                    </button>
+                  ))
+                ) : (
+                  <div className="profile-notification-empty">
+                    No recent messages
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="profile-profile-dropdown" ref={dropdownRef}>
-            <button onClick={handleProfileClick} className="profile-profile-btn">
-              Profile ▼
+            <button
+              onClick={handleProfileClick}
+              className="profile-profile-btn"
+            >
+              {userData.profilePic ? (
+                <img
+                  src={userData.profilePic}
+                  alt="Profile Picture"
+                  className="profile-profile-pic"
+                />
+              ) : (
+                <div className="profile-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="profile-dropdown-menu">
                 <div className="profile-dropdown-username">
                   {userData.username}
                 </div>
-                <button 
+                <button
                   onClick={() => handleDropdownItemClick('/profile')}
                   className="profile-dropdown-item"
                 >
                   My Profile
                 </button>
-                <button 
+                <button
                   onClick={() => handleDropdownItemClick('/upload')}
                   className="profile-dropdown-item"
                 >
@@ -352,14 +510,14 @@ const Profile = () => {
                 >
                   My Drafts
                 </button> */}
-                <button 
+                <button
                   onClick={() => handleDropdownItemClick('/friends')}
                   className="profile-dropdown-item"
                 >
                   Friends
                 </button>
                 <div className="profile-dropdown-divider"></div>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="profile-dropdown-item profile-dropdown-logout"
                 >
@@ -374,15 +532,13 @@ const Profile = () => {
       {/* Profile Banner Section */}
       <section className="profile-banner">
         {userData.bannerImage ? (
-          <img 
-            src={userData.bannerImage} 
-            alt="Profile Banner" 
+          <img
+            src={userData.bannerImage}
+            alt="Profile Banner"
             className="profile-banner-image"
           />
         ) : (
-          <div className="profile-banner-text">
-            Profile Banner
-          </div>
+          <div className="profile-banner-text">Profile Banner</div>
         )}
         <button className="profile-edit-button" onClick={handleEditProfile}>
           EDIT PROFILE
@@ -393,61 +549,99 @@ const Profile = () => {
       <section className="profile-user-info">
         <div className="profile-pic">
           {userData.profilePic ? (
-            <img 
-              src={userData.profilePic} 
-              alt="Profile Picture" 
+            <img
+              src={userData.profilePic}
+              alt="Profile Picture"
               className="profile-pic-image"
             />
           ) : (
-            <div className="profile-pic-placeholder">
-              Profile pic
-            </div>
+            <div className="profile-pic-placeholder">Profile pic</div>
           )}
         </div>
-        <div className="profile-username">
-          {userData.username}
-        </div>
+        <div className="profile-username">{userData.username}</div>
       </section>
 
       {/* User Content Panel */}
       <main className="profile-content">
-        <div className="profile-content-box" onClick={handleMyGamesClick} style={{cursor: 'pointer'}}>
-          <h2 className="profile-content-title">
-            User Game Demos
-          </h2>
+        <div
+          className="profile-content-box"
+          onClick={handleMyGamesClick}
+          style={{ cursor: 'pointer' }}
+        >
+          <h2 className="profile-content-title">User Game Demos</h2>
           <div className="profile-content-placeholder">
-            Your game demos will appear here
+            {isLoadingGames ? (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666',
+                  borderRadius: '1rem',
+                }}
+              >
+                Loading...
+              </div>
+            ) : latestGameVideo ? (
+              <video
+                src={latestGameVideo.url}
+                className="profile-game-thumbnail"
+                muted
+                preload="metadata"
+                onLoadedData={(e) => {
+                  // Seek to 2nd frame (0.1 seconds) for thumbnail
+                  e.target.currentTime = 0.1;
+                }}
+                onSeeked={(e) => {
+                  // Pause at the 2nd frame
+                  e.target.pause();
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '1rem',
+                }}
+              />
+            ) : (
+              <div>Your game demos will appear here</div>
+            )}
           </div>
         </div>
-        
-        <div className="profile-content-box" onClick={handleMyArtClick} style={{cursor: 'pointer'}}>
-          <h2 className="profile-content-title">
-            User Art file
-          </h2>
+
+        <div
+          className="profile-content-box"
+          onClick={handleMyArtClick}
+          style={{ cursor: 'pointer' }}
+        >
+          <h2 className="profile-content-title">User Art file</h2>
           <div className="profile-content-placeholder">
             {isLoadingArt ? (
-              <div style={{ 
-                width: '100%', 
-                height: '100%', 
-                backgroundColor: '#f0f0f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#666',
-                borderRadius: '1rem'
-              }}>
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666',
+                  borderRadius: '1rem',
+                }}
+              >
                 Loading...
               </div>
             ) : latestArtImage ? (
-              <DominantColorThumbnail 
+              <DominantColorThumbnail
                 imageUrl={latestArtImage.url}
-                alt={latestArtImage.description || "Latest Art"}
+                alt={latestArtImage.description || 'Latest Art'}
                 className="profile-art-thumbnail"
               />
             ) : (
-              <div className="profile-content-placeholder">
-                Your art files will appear here
-              </div>
+              <div>Your art files will appear here</div>
             )}
           </div>
         </div>
@@ -459,14 +653,14 @@ const Profile = () => {
           <div className="profile-popup-content" ref={popupRef}>
             <div className="profile-popup-header">
               <h2>Edit Profile</h2>
-              <button 
+              <button
                 className="profile-popup-close"
                 onClick={handleCancelEdit}
               >
                 ×
               </button>
             </div>
-            
+
             <div className="profile-popup-body">
               {/* Username Section */}
               <div className="profile-popup-section">
@@ -474,7 +668,9 @@ const Profile = () => {
                 <input
                   type="text"
                   value={editData.username}
-                  onChange={(e) => setEditData({...editData, username: e.target.value})}
+                  onChange={(e) =>
+                    setEditData({ ...editData, username: e.target.value })
+                  }
                   className="profile-popup-input"
                   placeholder="Enter username"
                 />
@@ -485,9 +681,9 @@ const Profile = () => {
                 <h3>Profile Banner</h3>
                 <div className="profile-popup-upload-area">
                   {editData.bannerImage ? (
-                    <img 
-                      src={editData.bannerImage} 
-                      alt="Banner Preview" 
+                    <img
+                      src={editData.bannerImage}
+                      alt="Banner Preview"
                       className="profile-popup-banner-preview"
                     />
                   ) : (
@@ -502,7 +698,10 @@ const Profile = () => {
                     className="profile-popup-file-input"
                     id="banner-upload"
                   />
-                  <label htmlFor="banner-upload" className="profile-popup-upload-btn">
+                  <label
+                    htmlFor="banner-upload"
+                    className="profile-popup-upload-btn"
+                  >
                     Upload Banner
                   </label>
                 </div>
@@ -516,9 +715,9 @@ const Profile = () => {
                 <h3>Profile Picture</h3>
                 <div className="profile-popup-upload-area">
                   {editData.profilePic ? (
-                    <img 
-                      src={editData.profilePic} 
-                      alt="Profile Pic Preview" 
+                    <img
+                      src={editData.profilePic}
+                      alt="Profile Pic Preview"
                       className="profile-popup-pic-preview"
                     />
                   ) : (
@@ -533,29 +732,39 @@ const Profile = () => {
                     className="profile-popup-file-input"
                     id="pic-upload"
                   />
-                  <label htmlFor="pic-upload" className="profile-popup-upload-btn">
+                  <label
+                    htmlFor="pic-upload"
+                    className="profile-popup-upload-btn"
+                  >
                     Upload Picture
                   </label>
                 </div>
                 <p className="profile-popup-help-text">
-                  Upload an image and crop it to fit your profile picture (1:1 ratio)
+                  Upload an image and crop it to fit your profile picture (1:1
+                  ratio)
                 </p>
               </div>
             </div>
 
             <div className="profile-popup-actions">
-              <button onClick={handleCancelEdit} className="profile-popup-btn profile-popup-btn-secondary" disabled={isSaving}>
+              <button
+                onClick={handleCancelEdit}
+                className="profile-popup-btn profile-popup-btn-secondary"
+                disabled={isSaving}
+              >
                 Cancel
               </button>
-              <button onClick={handleSaveProfile} className="profile-popup-btn profile-popup-btn-primary" disabled={isSaving}>
+              <button
+                onClick={handleSaveProfile}
+                className="profile-popup-btn profile-popup-btn-primary"
+                disabled={isSaving}
+              >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
-            
+
             {saveError && (
-              <div className="profile-popup-error">
-                {saveError}
-              </div>
+              <div className="profile-popup-error">{saveError}</div>
             )}
           </div>
         </div>
@@ -587,3 +796,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
+//this is the the latest version and most functioning commit right now.

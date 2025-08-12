@@ -19,7 +19,24 @@ router.post('/upload', authenticateToken, multer.single('image'), async (req, re
       return res.status(400).json({ message: 'No image file provided' });
     }
 
-    const imageUrl = req.file.path;
+    // Upload to Cloudinary manually since we're using memory storage
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'game-pen-uploads',
+          allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+          transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      
+      uploadStream.end(req.file.buffer);
+    });
+
+    const imageUrl = uploadResult.secure_url;
     
     const query = `
       INSERT INTO images (user_id, url, description, is_public, genre)
