@@ -89,6 +89,7 @@ test-*.js
 test-*.png
 check-*.js
 quick-test.js
+test-upload-image.js
 
 # Logs
 logs
