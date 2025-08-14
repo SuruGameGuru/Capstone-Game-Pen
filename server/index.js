@@ -20,6 +20,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', require('./Routes/auth'));
 app.use('/api/images', require('./Routes/images'));
+app.use('/api/videos', require('./Routes/videos'));
 app.use('/api/messages', require('./Routes/messages'));
 app.use('/api/comments', require('./Routes/comments'));
 app.use('/api/friends', require('./Routes/friends'));

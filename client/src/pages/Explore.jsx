@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import { profileService } from '../services/profileService';
 import Logo from '../components/Logo';
 import { imageService } from '../services/imageService';
 import '../styles/Explore.css';
 import '../styles/Profile.css'; // Import for profile button style
 
 const Explore = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [displayCount, setDisplayCount] = useState(30);
@@ -14,6 +17,7 @@ const Explore = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [userProfilePic, setUserProfilePic] = useState(null);
   const dropdownRef = useRef(null);
 
   const [userData, setUserData] = useState({
@@ -141,6 +145,34 @@ const Explore = () => {
     }
   }, [searchTerm, images]);
 
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+        setUserData({
+          username: profileData.username || user.username || 'User Name'
+        });
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
+
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -206,11 +238,17 @@ const Explore = () => {
         </div>
         
         <nav className="explore-navbar">
-          <Link to="/">Home</Link>
-          <Link to="/upload">Upload</Link>
           <div className="explore-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="explore-profile-btn">
-              Profile ▼
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="explore-profile-pic"
+                />
+              ) : (
+                <div className="explore-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="explore-dropdown-menu">
@@ -228,6 +266,12 @@ const Explore = () => {
                   className="explore-dropdown-item"
                 >
                   Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/friends')}
+                  className="explore-dropdown-item"
+                >
+                  Friends
                 </button>
                 {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}

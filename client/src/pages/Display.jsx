@@ -2,14 +2,16 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { imageService } from '../services/imageService';
+import { videoService } from '../services/videoService';
 import { commentService } from '../services/commentService';
+import { profileService } from '../services/profileService';
 import '../styles/Display.css';
 
 const Display = () => {
-  const { id } = useParams();
+  const { id, type } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
-  const [image, setImage] = useState(null);
+  const [content, setContent] = useState(null);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -21,33 +23,60 @@ const Display = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userProfilePic, setUserProfilePic] = useState(null);
   const dropdownRef = useRef(null);
+  
+  // Determine if this is a video or image based on URL or type parameter
+  const isVideo = type === 'video' || window.location.pathname.includes('/video/');
 
   useEffect(() => {
-    const fetchImage = async () => {
+    const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const imageData = await imageService.getImage(id);
-        if (imageData) {
-          setImage(imageData);
-          setLikeCount(imageData.like_count || 0);
-          setDislikeCount(imageData.dislike_count || 0);
-          
-          // Check if current user has liked or disliked this image
-          if (user) {
-            const [hasLiked, hasDisliked] = await Promise.all([
-              imageService.checkIfLiked(id),
-              imageService.checkIfDisliked(id)
-            ]);
-            setLiked(hasLiked);
-            setDisliked(hasDisliked);
+        let contentData;
+        
+        if (isVideo) {
+          contentData = await videoService.getVideo(id);
+          if (contentData) {
+            setLikeCount(contentData.like_count || 0);
+            setDislikeCount(contentData.dislike_count || 0);
+            
+            // Check if current user has liked or disliked this video
+            if (user) {
+              const [hasLiked, hasDisliked] = await Promise.all([
+                videoService.checkIfLiked(id),
+                videoService.checkIfDisliked(id)
+              ]);
+              setLiked(hasLiked);
+              setDisliked(hasDisliked);
+            }
           }
         } else {
-          setError('Image not found');
+          contentData = await imageService.getImage(id);
+          if (contentData) {
+            setLikeCount(contentData.like_count || 0);
+            setDislikeCount(contentData.dislike_count || 0);
+            
+            // Check if current user has liked or disliked this image
+            if (user) {
+              const [hasLiked, hasDisliked] = await Promise.all([
+                imageService.checkIfLiked(id),
+                imageService.checkIfDisliked(id)
+              ]);
+              setLiked(hasLiked);
+              setDisliked(hasDisliked);
+            }
+          }
+        }
+        
+        if (contentData) {
+          setContent(contentData);
+        } else {
+          setError(isVideo ? 'Video not found' : 'Image not found');
         }
       } catch (error) {
-        console.error('Error fetching image:', error);
-        setError('Failed to load image');
+        console.error('Error fetching content:', error);
+        setError('Failed to load content');
       } finally {
         setIsLoading(false);
       }
@@ -62,9 +91,9 @@ const Display = () => {
       }
     };
 
-    fetchImage();
+    fetchContent();
     fetchComments();
-  }, [id, user]);
+  }, [id, user, isVideo]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,6 +109,31 @@ const Display = () => {
     };
   }, []);
 
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
+
   const handleLike = async () => {
     if (!user) {
       navigate('/login');
@@ -87,30 +141,50 @@ const Display = () => {
     }
     
     try {
-      if (liked) {
-        // User already liked, so unlike
-        await imageService.unlikeImage(id);
-        setLiked(false);
-        setLikeCount(prev => prev - 1);
+      if (isVideo) {
+        if (liked) {
+          // User already liked, so unlike
+          await videoService.unlikeVideo(id);
+          setLiked(false);
+          setLikeCount(prev => prev - 1);
+        } else {
+          // User hasn't liked, so like
+          await videoService.likeVideo(id);
+          setLiked(true);
+          setLikeCount(prev => prev + 1);
+          
+          // Backend will automatically remove dislike if it exists
+          if (disliked) {
+            setDisliked(false);
+            setDislikeCount(prev => prev - 1);
+          }
+        }
       } else {
-        // User hasn't liked, so like
-        await imageService.likeImage(id);
-        setLiked(true);
-        setLikeCount(prev => prev + 1);
-        
-        // Backend will automatically remove dislike if it exists
-        if (disliked) {
-          setDisliked(false);
-          setDislikeCount(prev => prev - 1);
+        if (liked) {
+          // User already liked, so unlike
+          await imageService.unlikeImage(id);
+          setLiked(false);
+          setLikeCount(prev => prev - 1);
+        } else {
+          // User hasn't liked, so like
+          await imageService.likeImage(id);
+          setLiked(true);
+          setLikeCount(prev => prev + 1);
+          
+          // Backend will automatically remove dislike if it exists
+          if (disliked) {
+            setDisliked(false);
+            setDislikeCount(prev => prev - 1);
+          }
         }
       }
     } catch (error) {
       console.error('Error handling like:', error);
       if (error.message.includes('401')) {
-        alert('Please log in to like images');
+        alert('Please log in to like content');
         navigate('/login');
       } else {
-        alert('Failed to like image. Please try again.');
+        alert('Failed to like content. Please try again.');
       }
     }
   };
@@ -122,30 +196,50 @@ const Display = () => {
     }
     
     try {
-      if (disliked) {
-        // User already disliked, so undislike
-        await imageService.undislikeImage(id);
-        setDisliked(false);
-        setDislikeCount(prev => prev - 1);
+      if (isVideo) {
+        if (disliked) {
+          // User already disliked, so undislike
+          await videoService.undislikeVideo(id);
+          setDisliked(false);
+          setDislikeCount(prev => prev - 1);
+        } else {
+          // User hasn't disliked, so dislike
+          await videoService.dislikeVideo(id);
+          setDisliked(true);
+          setDislikeCount(prev => prev + 1);
+          
+          // Backend will automatically remove like if it exists
+          if (liked) {
+            setLiked(false);
+            setLikeCount(prev => prev - 1);
+          }
+        }
       } else {
-        // User hasn't disliked, so dislike
-        await imageService.dislikeImage(id);
-        setDisliked(true);
-        setDislikeCount(prev => prev + 1);
-        
-        // Backend will automatically remove like if it exists
-        if (liked) {
-          setLiked(false);
-          setLikeCount(prev => prev - 1);
+        if (disliked) {
+          // User already disliked, so undislike
+          await imageService.undislikeImage(id);
+          setDisliked(false);
+          setDislikeCount(prev => prev - 1);
+        } else {
+          // User hasn't disliked, so dislike
+          await imageService.dislikeImage(id);
+          setDisliked(true);
+          setDislikeCount(prev => prev + 1);
+          
+          // Backend will automatically remove like if it exists
+          if (liked) {
+            setLiked(false);
+            setLikeCount(prev => prev - 1);
+          }
         }
       }
     } catch (error) {
       console.error('Error handling dislike:', error);
       if (error.message.includes('401')) {
-        alert('Please log in to dislike images');
+        alert('Please log in to dislike content');
         navigate('/login');
       } else {
-        alert('Failed to dislike image. Please try again.');
+        alert('Failed to dislike content. Please try again.');
       }
     }
   };
@@ -157,14 +251,14 @@ const Display = () => {
     }
     
     // Don't allow messaging yourself
-    if (image && image.user_id === user.id) {
+    if (content && content.user_id === user.id) {
       alert('You cannot message yourself!');
       return;
     }
     
-    // Navigate to direct message with the image author
-    if (image && image.user_id && image.username) {
-      navigate(`/direct-message/${image.user_id}/${image.username}`);
+    // Navigate to direct message with the content author
+    if (content && content.user_id && content.username) {
+      navigate(`/direct-message/${content.user_id}/${content.username}`);
     } else {
       alert('Unable to start conversation. User information not available.');
     }
@@ -273,7 +367,15 @@ const Display = () => {
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
-                Profile ▼
+                {userProfilePic ? (
+                  <img
+                    src={userProfilePic}
+                    alt="Profile Picture"
+                    className="display-profile-pic"
+                  />
+                ) : (
+                  <div className="display-profile-pic-placeholder">Profile</div>
+                )}
               </button>
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
@@ -291,6 +393,12 @@ const Display = () => {
                     className="display-dropdown-item"
                   >
                     Upload Content
+                  </button>
+                  <button 
+                    onClick={() => handleDropdownItemClick('/friends')}
+                    className="display-dropdown-item"
+                  >
+                    Friends
                   </button>
                   {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
@@ -315,7 +423,7 @@ const Display = () => {
     );
   }
 
-  if (error || !image) {
+  if (error || !content) {
     return (
       <div className="display-page">
         <header className="display-header">
@@ -340,7 +448,15 @@ const Display = () => {
             <div className="display-icon bell" title="Notifications"></div>
             <div className="display-profile-dropdown" ref={dropdownRef}>
               <button onClick={handleProfileClick} className="display-profile-btn">
-                Profile ▼
+                {userProfilePic ? (
+                  <img
+                    src={userProfilePic}
+                    alt="Profile Picture"
+                    className="display-profile-pic"
+                  />
+                ) : (
+                  <div className="display-profile-pic-placeholder">Profile</div>
+                )}
               </button>
               {showProfileDropdown && (
                 <div className="display-dropdown-menu">
@@ -358,6 +474,12 @@ const Display = () => {
                     className="display-dropdown-item"
                   >
                     Upload Content
+                  </button>
+                  <button 
+                    onClick={() => handleDropdownItemClick('/friends')}
+                    className="display-dropdown-item"
+                  >
+                    Friends
                   </button>
                   {/* <button 
                     onClick={() => handleDropdownItemClick('/drafts')}
@@ -379,7 +501,7 @@ const Display = () => {
         </header>
         <div className="display-error">
           <h2>Error</h2>
-          <p>{error || 'Image not found'}</p>
+          <p>{error || (isVideo ? 'Video not found' : 'Image not found')}</p>
           <button onClick={handleBack} className="display-back-btn">Go Back</button>
         </div>
       </div>
@@ -411,7 +533,15 @@ const Display = () => {
           <div className="display-icon bell" title="Notifications"></div>
           <div className="display-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="display-profile-btn">
-              Profile ▼
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="display-profile-pic"
+                />
+              ) : (
+                <div className="display-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="display-dropdown-menu">
@@ -429,6 +559,12 @@ const Display = () => {
                   className="display-dropdown-item"
                 >
                   Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/friends')}
+                  className="display-dropdown-item"
+                >
+                  Friends
                 </button>
                 {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
@@ -451,15 +587,24 @@ const Display = () => {
       
       <div className="display-container">
         <div className="display-box">
-          <img src={image.url} alt={image.description || "Image"} className="display-img" />
+          {isVideo ? (
+            <video 
+              src={content?.url} 
+              controls 
+              className="display-video"
+              style={{ width: '100%', maxHeight: '600px' }}
+            />
+          ) : (
+            <img src={content?.url} alt={content?.description || "Image"} className="display-img" />
+          )}
           <div className="display-info">
-            <h2 className="display-title">{image.description || "Untitled"}</h2>
-            <p className="display-author">by {image.username || "Unknown"}</p>
-            {image.genre && (
-              <span className="display-genre">{image.genre}</span>
+            <h2 className="display-title">{content?.description || "Untitled"}</h2>
+            <p className="display-author">by {content?.username || "Unknown"}</p>
+            {content?.genre && (
+              <span className="display-genre">{content.genre}</span>
             )}
             <div className="display-description">
-              {image.description || "No description available"}
+              {content?.description || "No description available"}
             </div>
             <div className="display-actions">
               <div className="display-action-column">

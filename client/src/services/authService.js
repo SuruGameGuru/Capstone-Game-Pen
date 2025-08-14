@@ -35,7 +35,9 @@ const authService = {
   deleteAccount: async (userId) => {
     const response = await api.delete(`/auth/account/${userId}`);
     return response.data;
-  }
+  },
 };
 
 export default authService;
+
+//saving progress

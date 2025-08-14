@@ -1,15 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import { profileService } from '../services/profileService';
 import ImageUpload from '../components/ImageUpload';
+import VideoUpload from '../components/VideoUpload';
 import '../styles/Upload.css';
 import '../styles/Profile.css'; // For profile-route-btn
 import '../styles/ImageUpload.css';
 
 const Upload = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadType, setUploadType] = useState('art');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [userProfilePic, setUserProfilePic] = useState(null);
   const dropdownRef = useRef(null);
 
   const [userData, setUserData] = useState({
@@ -29,6 +34,34 @@ const Upload = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Load user profile picture
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        if (!user) {
+          console.log('No user logged in');
+          return;
+        }
+
+        const userId = user.id;
+        console.log('Loading profile for user ID:', userId);
+
+        const profileData = await profileService.getUserProfile(userId);
+        console.log('Profile data loaded:', profileData);
+
+        setUserProfilePic(profileData.profilePicture || null);
+        setUserData({
+          username: profileData.username || user.username || 'User Name'
+        });
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        setUserProfilePic(null);
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   const handleProfileClick = () => {
     setShowProfileDropdown(!showProfileDropdown);
@@ -69,11 +102,17 @@ const Upload = () => {
         </Link>
         
         <nav className="upload-navbar">
-          <Link to="/">Home</Link>
-          <Link to="/explore">Explore</Link>
           <div className="upload-profile-dropdown" ref={dropdownRef}>
             <button onClick={handleProfileClick} className="upload-profile-btn">
-              Profile ▼
+              {userProfilePic ? (
+                <img
+                  src={userProfilePic}
+                  alt="Profile Picture"
+                  className="upload-profile-pic"
+                />
+              ) : (
+                <div className="upload-profile-pic-placeholder">Profile</div>
+              )}
             </button>
             {showProfileDropdown && (
               <div className="upload-dropdown-menu">
@@ -91,6 +130,12 @@ const Upload = () => {
                   className="upload-dropdown-item"
                 >
                   Upload Content
+                </button>
+                <button 
+                  onClick={() => handleDropdownItemClick('/explore')}
+                  className="upload-dropdown-item"
+                >
+                  Explore
                 </button>
                 {/* <button 
                   onClick={() => handleDropdownItemClick('/drafts')}
@@ -155,7 +200,7 @@ const Upload = () => {
         <div className="upload-modal-overlay" onClick={() => setShowUploadModal(false)}>
           <div className="upload-modal" onClick={(e) => e.stopPropagation()}>
             <div className="upload-modal-header">
-              <h2>Upload New {uploadType === 'art' ? 'Art' : 'Game'}</h2>
+              <h2>Upload New {uploadType === 'art' ? 'Art' : 'Game Demo'}</h2>
               <button 
                 className="upload-modal-close"
                 onClick={() => setShowUploadModal(false)}
@@ -163,11 +208,19 @@ const Upload = () => {
                 ×
               </button>
             </div>
-            <ImageUpload 
-              uploadType={uploadType}
-              onUploadSuccess={handleUploadSuccess}
-              onUploadError={handleUploadError}
-            />
+            {uploadType === 'art' ? (
+              <ImageUpload 
+                uploadType={uploadType}
+                onUploadSuccess={handleUploadSuccess}
+                onUploadError={handleUploadError}
+              />
+            ) : (
+              <VideoUpload 
+                uploadType={uploadType}
+                onUploadSuccess={handleUploadSuccess}
+                onUploadError={handleUploadError}
+              />
+            )}
           </div>
         </div>
       )}
