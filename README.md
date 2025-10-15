@@ -7,6 +7,7 @@ A social platform for indie game developers and artists to connect, collaborate,
 This project was specifically designed for **solo indie creators** who struggle to find the right collaborators. As an artist passionate about games, I experienced firsthand the overwhelming challenge of juggling all roles—art, design, development, and audience management—while trying to build something meaningful.
 
 ### Target Audience:
+
 - **Solo game developers** looking for artists who match their vision
 - **Game artists** seeking development projects that align with their style
 - **Indie creators** wanting to build authentic connections without corporate noise
@@ -15,10 +16,13 @@ This project was specifically designed for **solo indie creators** who struggle 
 ## Why was GamePen created?
 
 ### The Problem:
+
 Indie creators often struggle to find the right people to work with. Big platforms like ArtStation or DeviantArt are great for showcasing work, but they don't focus on helping solo developers and artists actually connect and collaborate. These platforms are dominated by large studios and established professionals, making it difficult for indie creators to stand out and find meaningful partnerships.
 
 ### The Solution:
+
 GamePen fills this gap by providing a dedicated space where indie creators can:
+
 - Find collaborators who match their style and vision
 - Share work in genre-specific communities
 - Build meaningful connections with other creators
@@ -28,26 +32,33 @@ GamePen fills this gap by providing a dedicated space where indie creators can:
 ## What can users do?
 
 ### 🎨 **Share Your Work**
+
 Upload and showcase your game art, concepts, and finished pieces in a community that understands indie development
 
 ### 💬 **Connect Through Genres**
+
 Join chat channels based on game genres (Action, RPG, Strategy, etc.) to find people who share your specific interests and creative vision
 
 ### 👥 **Build Your Network**
+
 Send friend requests, direct message other creators, and build lasting collaborations that go beyond just portfolio sharing
 
 ### 🏷️ **Discover Talent**
+
 Browse through uploaded work, like and comment on pieces you love, and discover new artists and developers who might be perfect collaborators
 
 ### 📱 **Real-time Communication**
+
 Chat in real-time with other creators through genre channels and direct messages for immediate collaboration
 
 ### 🎥 **Video Content**
+
 Share and view video content alongside images for a richer creative experience and better project showcases
 
 ## Technology
 
 Built with modern web technologies:
+
 - **Frontend**: React.js with real-time chat
 - **Backend**: Node.js with Express
 - **Database**: PostgreSQL
@@ -65,4 +76,10 @@ Built with modern web technologies:
 
 ---
 
-*GamePen - Where indie creators find their perfect match.*
+_GamePen - Where indie creators find their perfect match._
+
+## Copyright
+
+© 2025 Suru Afariogun
+All rights reserved.
+You may view this project for educational or personal inspiration, but reproduction, redistribution, or commercial use of the code or assets is not permitted without permission.
